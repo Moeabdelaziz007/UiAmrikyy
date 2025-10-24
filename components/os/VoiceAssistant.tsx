@@ -239,10 +239,12 @@ const VoiceAssistant: React.FC = () => {
                         if(message.toolCall){
                             for(const fc of message.toolCall.functionCalls){
                                 if(fc.name === 'openApp'){
-                                    const result = handleOpenApp(fc.args.appName);
+                                    // FIX: Cast `fc.args.appName` to string as the API returns it as `unknown`.
+                                    const result = handleOpenApp(fc.args.appName as string);
                                     sessionRef.current?.sendToolResponse({functionResponses: {id: fc.id, name: fc.name, response: {result}}});
                                 } else if (fc.name === 'executeWorkflow') {
-                                    const result = await handleExecuteWorkflow(fc.args.prompt);
+                                    // FIX: Cast `fc.args.prompt` to string as the API returns it as `unknown`.
+                                    const result = await handleExecuteWorkflow(fc.args.prompt as string);
                                     sessionRef.current?.sendToolResponse({functionResponses: {id: fc.id, name: fc.name, response: {result}}});
                                 }
                             }

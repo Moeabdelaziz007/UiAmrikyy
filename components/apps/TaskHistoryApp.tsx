@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { History, Trash2, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { LanguageContext } from '../../App';
@@ -90,6 +90,23 @@ const TaskHistoryApp: React.FC = () => {
   const { theme } = useTheme();
   const currentText = translations.global[lang];
   const { history, clearHistory } = useTaskHistoryStore();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredHistory = history.filter(entry => {
+    if (!searchQuery) return true;
+    const lowerCaseQuery = searchQuery.toLowerCase();
+    
+    // Safely stringify and lowercase inputs/outputs
+    const inputString = (typeof entry.taskInput === 'string' ? entry.taskInput : JSON.stringify(entry.taskInput)).toLowerCase();
+    const outputString = (typeof entry.taskOutput === 'string' ? entry.taskOutput : JSON.stringify(entry.taskOutput)).toLowerCase();
+
+    return (
+      entry.agentName.toLowerCase().includes(lowerCaseQuery) ||
+      entry.taskType.toLowerCase().includes(lowerCaseQuery) ||
+      inputString.includes(lowerCaseQuery) ||
+      outputString.includes(lowerCaseQuery)
+    );
+  });
 
   return (
     <motion.div
@@ -98,14 +115,26 @@ const TaskHistoryApp: React.FC = () => {
       className="h-full flex flex-col"
       style={{ background: theme.colors.background, color: theme.colors.text }}
     >
-      <header className="flex items-center justify-between p-4 border-b flex-shrink-0" style={{ borderColor: theme.colors.border }}>
-        <div className="flex items-center gap-2">
+      <header className="flex items-center justify-between p-4 border-b flex-shrink-0 gap-4" style={{ borderColor: theme.colors.border }}>
+        <div className="flex items-center gap-2 flex-shrink-0">
           <History className="w-6 h-6 text-primary" style={{color: theme.colors.primary}} />
           <h1 className="text-xl font-bold">{currentText.taskHistory}</h1>
         </div>
+
+        <div className="flex-1 min-w-0">
+            <input 
+              type="text"
+              placeholder={currentText.searchHistory}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-background/50 border rounded-lg px-3 py-1.5 text-sm text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+              style={{ background: theme.colors.background, borderColor: theme.colors.border }}
+            />
+        </div>
+
         <button
           onClick={clearHistory}
-          className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border bg-surface hover:bg-background transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border bg-surface hover:bg-background transition-colors disabled:opacity-50 flex-shrink-0"
           style={{ borderColor: theme.colors.border }}
           disabled={history.length === 0}
         >
@@ -115,14 +144,14 @@ const TaskHistoryApp: React.FC = () => {
       </header>
 
       <main className="flex-1 p-4 overflow-y-auto custom-scrollbar">
-        {history.length === 0 ? (
+        {filteredHistory.length === 0 ? (
           <div className="flex items-center justify-center h-full text-text-secondary">
-            {currentText.noTasksYet}
+            {history.length > 0 ? currentText.noResultsFound : currentText.noTasksYet}
           </div>
         ) : (
           <div className="space-y-3">
             <AnimatePresence>
-              {history.map((entry) => (
+              {filteredHistory.map((entry) => (
                 <TaskEntry key={entry.id} entry={entry} />
               ))}
             </AnimatePresence>

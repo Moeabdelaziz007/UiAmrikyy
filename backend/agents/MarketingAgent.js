@@ -17,7 +17,7 @@
  * @created 2025-10-23
  */
 
-const { GoogleGenAI } = require('@google/genai');
+const { getAi } = require('../services/geminiService');
 const logger = require('../../utils/logger');
 
 class MarketingAgent {
@@ -25,12 +25,10 @@ class MarketingAgent {
     this.name = 'Marketing Agent';
     this.icon = '📢'; // Megaphone emoji
     this.description = 'Develops strategies, creates content, and analyzes campaigns with specialized sub-agents.';
-
-    // Initialize Gemini for AI-powered content generation
-    this.genAI = new GoogleGenAI({ apiKey: process.env.API_KEY }); // Using process.env.API_KEY as per guidelines
+    
     this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
-    if (!process.env.API_KEY) { // Changed to API_KEY
+    if (!process.env.API_KEY) {
       logger.warn('[MarketingAgent] API_KEY is not set. Marketing Agent will not be able to make real API calls.');
     }
 
@@ -102,10 +100,8 @@ Provide a clear summary of findings and strategic recommendations.
    * Helper to make Gemini API calls with Google Search tool
    */
   async _callGeminiWithSearch(systemPrompt, userPrompt, maxOutputTokens, thinkingBudget) {
-    if (!process.env.API_KEY) {
-      throw new Error('API_KEY is not configured. Cannot make real AI calls.');
-    }
-    const response = await this.genAI.models.generateContent({
+    const ai = getAi();
+    const response = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -127,7 +123,7 @@ Provide a clear summary of findings and strategic recommendations.
   async executeTask(task) {
     logger.info(`[MarketingAgent] Executing task: ${task.type}`);
 
-    if (!process.env.API_KEY) { // Changed to API_KEY
+    if (!process.env.API_KEY) {
       throw new Error('API_KEY is not configured. Cannot make real AI calls.');
     }
 

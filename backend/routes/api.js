@@ -5,6 +5,7 @@ const orchestratorService = require('../services/agentOrchestrator');
 const NavigatorAgent = require('../agents/NavigatorAgent');
 const VisionAgent = require('../agents/VisionAgent');
 const ResearchAgent = require('../agents/ResearchAgent');
+const runResearchAixTask = require('../agents/ResearchAgent').runAixTask; // Import the new function
 const TranslatorAgent = require('../agents/TranslatorAgent');
 const SchedulerAgent = require('../agents/SchedulerAgent');
 const StorageAgent = require('../agents/StorageAgent');
@@ -167,6 +168,19 @@ router.post('/agents/marketing', async (req, res) => {
   } catch (error) {
     logger.error(`Marketing Agent error on task ${type}:`, error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// --- New Test Route for AIX ---
+router.post('/test-aix', async (req, res) => {
+  logger.info('Received request to test AIX execution');
+  // For this test, we hardcode the filename.
+  // In a real scenario, this might come from the request body.
+  const result = await runResearchAixTask('customer_feedback_analysis.aix');
+  if (result.success) {
+    res.json({ message: 'AIX task executed successfully', output: result.output });
+  } else {
+    res.status(500).json({ message: 'AIX task failed', error: result.error });
   }
 });
 

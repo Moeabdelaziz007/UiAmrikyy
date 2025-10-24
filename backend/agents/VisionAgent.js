@@ -1,5 +1,5 @@
 // backend/src/agents/mini/VisionAgent.js
-const { GoogleGenAI } = require('@google/genai');
+const { getAi } = require('../services/geminiService');
 const { ImageAnnotatorClient } = require('@google-cloud/vision');
 const axios = require('axios');
 const logger = require('../../utils/logger');
@@ -9,12 +9,8 @@ class VisionAgent {
     this.name = 'Vision Agent';
     this.description = 'Handles image analysis, OCR, and object detection.';
     
-    // Initialize Gemini Pro Vision
-    if (process.env.API_KEY) {
-      this.genAI = new GoogleGenAI({apiKey: process.env.API_KEY});
-    } else {
+    if (!process.env.API_KEY) {
       logger.warn('[VisionAgent] API_KEY not set. Gemini functions will be disabled.');
-      this.genAI = null;
     }
 
     // Initialize Google Cloud Vision client
@@ -50,11 +46,12 @@ class VisionAgent {
 
     switch (task.type) {
       case 'analyzeImage':
-        if (!this.genAI) throw new Error('Gemini Vision is not configured.');
+        if (!process.env.API_KEY) throw new Error('Gemini Vision is not configured.');
         if (!task.imageUrl) throw new Error('Image URL is required for analyzeImage.');
         
+        const ai = getAi();
         const imagePart = await this._getImagePart(task.imageUrl);
-        const result = await this.genAI.models.generateContent({
+        const result = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: [{ parts: [imagePart, { text: task.prompt || "Describe this image in detail." }] }],
         });

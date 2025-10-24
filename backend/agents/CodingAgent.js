@@ -17,8 +17,8 @@
  * @created 2025-10-23
  */
 
-const { GoogleGenAI } = require('@google/genai');
-const logger = require('../../utils/logger'); // Assuming a logger utility exists
+const { getAi } = require('../services/geminiService');
+const logger = require('../utils/logger'); // Assuming a logger utility exists
 
 class CodingAgent {
   constructor() {
@@ -26,11 +26,9 @@ class CodingAgent {
     this.icon = '💻';
     this.description = 'Super coder with 6 specialized sub-agents';
 
-    // Initialize Gemini for AI-powered code generation
-    this.genAI = new GoogleGenAI({apiKey: process.env.API_KEY}); // Using process.env.API_KEY as per guidelines
     this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
-    if (!process.env.API_KEY) { // Changed to API_KEY
+    if (!process.env.API_KEY) {
       logger.warn('[CodingAgent] API_KEY is not set. Coding Agent will not be able to make real API calls.');
     }
 
@@ -140,7 +138,7 @@ Provide detailed code reviews with actionable improvements.
   async executeTask(task) {
     logger.info(`[CodingAgent] Executing task: ${task.type}`);
 
-    if (!process.env.API_KEY) { // Changed to API_KEY
+    if (!process.env.API_KEY) {
       throw new Error('API_KEY is not configured. Cannot make real AI calls.');
     }
 
@@ -148,28 +146,29 @@ Provide detailed code reviews with actionable improvements.
     await new Promise(resolve => setTimeout(resolve, 500)); 
 
     try {
+      const ai = getAi();
       switch (task.type) {
         case 'generateUI': // Changed from GENERATE_UI to match frontend
-          return await this.generateUI(task);
+          return await this.generateUI(task, ai);
 
         case 'designAPI': // Changed from DESIGN_API to match frontend
-          return await this.designAPI(task);
+          return await this.designAPI(task, ai);
 
         case 'createDeploymentConfig': // Changed from CREATE_DEPLOYMENT to match frontend
-          return await this.createDeployment(task);
+          return await this.createDeployment(task, ai);
 
         case 'writeTests': // Changed from WRITE_TESTS to match frontend
-          return await this.writeTests(task);
+          return await this.writeTests(task, ai);
 
         case 'generateDocumentation': // Changed from GENERATE_DOCS to match frontend
-          return await this.generateDocs(task);
+          return await this.generateDocs(task, ai);
 
         case 'reviewCode': // Renamed 'REVIEW_CODE' for specific task, but not directly used by UI yet
-          return await this.reviewCode(task.code);
+          return await this.reviewCode(task.code, ai);
 
         // This would be orchestrated externally by a higher-level agent if needed
         case 'generateFullProject': 
-          return await this.generateFullProject(task.prompt); 
+          return await this.generateFullProject(task.prompt, ai); 
 
         default:
           throw new Error(`Unknown task type: ${task.type}`);
@@ -183,7 +182,7 @@ Provide detailed code reviews with actionable improvements.
   /**
    * Sub-Agent 1: UI/UX Expert - Generate frontend code
    */
-  async generateUI(task) {
+  async generateUI(task, ai) {
     const subAgent = this.subAgents.uiux;
     const { projectDescription, component, framework } = task;
 
@@ -199,7 +198,7 @@ Key requirements:
 
 Provide complete, runnable code.`;
 
-    const result = await this.genAI.models.generateContent({
+    const result = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -221,7 +220,7 @@ Provide complete, runnable code.`;
   /**
    * Sub-Agent 2: API Architect - Design backend API
    */
-  async designAPI(task) {
+  async designAPI(task, ai) {
     const subAgent = this.subAgents.api;
     const { serviceDescription, endpoints, language } = task;
 
@@ -239,7 +238,7 @@ Include:
 
 Provide complete, production-ready backend code/schema.`;
 
-    const result = await this.genAI.models.generateContent({
+    const result = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -261,7 +260,7 @@ Provide complete, production-ready backend code/schema.`;
   /**
    * Sub-Agent 3: DevOps Engineer - Create deployment config
    */
-  async createDeployment(task) {
+  async createDeployment(task, ai) {
     const subAgent = this.subAgents.devops;
     const { serviceDescription, platform, ciCdTool } = task;
 
@@ -279,7 +278,7 @@ Include:
 
 Provide complete, production-ready deployment files.`;
 
-    const result = await this.genAI.models.generateContent({
+    const result = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -301,7 +300,7 @@ Provide complete, production-ready deployment files.`;
   /**
    * Sub-Agent 4: QA Specialist - Write test cases
    */
-  async writeTests(task) {
+  async writeTests(task, ai) {
     const subAgent = this.subAgents.qa;
     const { feature, testFramework } = task;
 
@@ -317,7 +316,7 @@ Include:
 
 Provide complete, runnable test suite.`;
 
-    const result = await this.genAI.models.generateContent({
+    const result = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -339,7 +338,7 @@ Provide complete, runnable test suite.`;
   /**
    * Sub-Agent 5: Documentation Writer - Generate documentation
    */
-  async generateDocs(task) {
+  async generateDocs(task, ai) {
     const subAgent = this.subAgents.docs;
     const { codeDescription, docType } = task;
 
@@ -356,7 +355,7 @@ Include:
 
 Provide complete, well-formatted documentation.`;
 
-    const result = await this.genAI.models.generateContent({
+    const result = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -378,7 +377,7 @@ Provide complete, well-formatted documentation.`;
   /**
    * Sub-Agent 6: Code Reviewer - Review code quality
    */
-  async reviewCode(code) {
+  async reviewCode(code, ai) {
     const subAgent = this.subAgents.reviewer;
 
     const userPrompt = `Review the following code:
@@ -396,7 +395,7 @@ Provide a detailed code review with:
 
 Be constructive and specific.`;
 
-    const result = await this.genAI.models.generateContent({
+    const result = await ai.models.generateContent({
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
@@ -420,7 +419,7 @@ Be constructive and specific.`;
    * This is a conceptual example for backend orchestration.
    * For the frontend, individual tasks are exposed.
    */
-  async generateFullProject(prompt) {
+  async generateFullProject(prompt, ai) {
     logger.info('[CodingAgent] Generating full project with all sub-agents...');
 
     const results = {
@@ -439,7 +438,7 @@ Be constructive and specific.`;
         projectDescription: prompt,
         component: 'full application UI structure',
         framework: 'React with Tailwind CSS'
-      });
+      }, ai);
 
       // 2. API Architect designs backend
       logger.info('[CodingAgent] Sub-Agent 2: API Architect working...');
@@ -447,7 +446,7 @@ Be constructive and specific.`;
         serviceDescription: prompt,
         endpoints: '/users, /posts, /comments',
         language: 'Node.js/Express'
-      });
+      }, ai);
 
       // 3. DevOps Engineer creates deployment
       logger.info('[CodingAgent] Sub-Agent 3: DevOps Engineer working...');
@@ -455,21 +454,21 @@ Be constructive and specific.`;
         serviceDescription: prompt,
         platform: 'Docker/Kubernetes',
         ciCdTool: 'GitHub Actions'
-      });
+      }, ai);
 
       // 4. QA Specialist writes tests
       logger.info('[CodingAgent] Sub-Agent 4: QA Specialist working...');
       results.subAgentResults.tests = await this.writeTests({
         feature: `${prompt} main features`,
         testFramework: 'Jest/Cypress'
-      });
+      }, ai);
 
       // 5. Documentation Writer generates docs
       logger.info('[CodingAgent] Sub-Agent 5: Documentation Writer working...');
       results.subAgentResults.docs = await this.generateDocs({
         codeDescription: prompt,
         docType: 'developer documentation and user guide'
-      });
+      }, ai);
 
       // 6. Code Reviewer reviews everything
       logger.info('[CodingAgent] Sub-Agent 6: Code Reviewer working...');
@@ -486,7 +485,7 @@ ${results.subAgentResults.deployment.result}
 Tests:
 ${results.subAgentResults.tests.result}
 `;
-      results.subAgentResults.review = await this.reviewCode(allCode);
+      results.subAgentResults.review = await this.reviewCode(allCode, ai);
 
       results.message = 'Full project generated successfully by all 6 sub-agents';
       results.summary = {

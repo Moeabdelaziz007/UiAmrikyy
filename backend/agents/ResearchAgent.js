@@ -67,3 +67,32 @@ class ResearchAgent {
 }
 
 module.exports = ResearchAgent;
+
+
+// New function to run AIX tasks, as requested for testing.
+const fs = require('fs/promises');
+const path = require('path');
+const { parseAixFile } = require('../services/aixParser');
+const { executeAixTask } = require('../services/aixExecutor');
+const loggerForAix = require('../utils/logger');
+
+async function runAixTask(fileName) {
+  try {
+    // Construct an absolute path from the project root. Assumes process is started from project root.
+    const filePath = path.join(process.cwd(), 'backend', 'aix_tasks', fileName);
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const parsedAix = parseAixFile(fileContent);
+
+    if (!parsedAix.PROMPT) {
+        throw new Error("AIX file is missing a [PROMPT] section.");
+    }
+
+    const result = await executeAixTask(parsedAix);
+    return result;
+  } catch (error) {
+    loggerForAix.error(`Error running AIX task ${fileName}:`, error);
+    return { success: false, error: 'Could not read or execute the AIX file.' };
+  }
+}
+
+module.exports.runAixTask = runAixTask;
