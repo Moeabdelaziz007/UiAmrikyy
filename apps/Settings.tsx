@@ -68,14 +68,14 @@ const SettingsApp: React.FC = () => {
 
     return (
         <div className="h-full flex flex-col bg-background text-text">
-            <header className="p-4 border-b" style={{ borderColor: theme.colors.border }}>
+            <header className="p-4 border-b flex-shrink-0" style={{ borderColor: theme.colors.border }}>
                 <h1 className="text-2xl font-bold">{currentText.settings}</h1>
             </header>
-            <div className="flex flex-1 overflow-hidden">
-                <nav className="w-48 border-r p-2" style={{ borderColor: theme.colors.border }}>
-                    <ul>
+            <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+                <nav className="w-full md:w-48 border-b md:border-b-0 md:border-r p-2 flex-shrink-0" style={{ borderColor: theme.colors.border }}>
+                    <ul className="flex flex-row md:flex-col gap-1 overflow-x-auto custom-scrollbar md:overflow-x-visible">
                         {tabs.map(tab => (
-                            <li key={tab.id}>
+                            <li key={tab.id} className="flex-shrink-0 md:flex-shrink">
                                 <button 
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`w-full flex items-center gap-3 text-left p-2 rounded-md text-sm transition-colors ${activeTab === tab.id ? 'bg-primary/20 text-primary font-semibold' : 'hover:bg-white/10'}`}
