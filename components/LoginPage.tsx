@@ -51,16 +51,16 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         className="relative z-10 p-8 md:p-12 rounded-2xl shadow-2xl max-w-md w-full text-center border border-white/20"
         style={{ background: currentThemeColors.surface }}
       >
-        <h1 className={`text-4xl font-bold mb-2 text-transparent bg-clip-text`}
+        <h1 className={`text-4xl sm:text-5xl font-bold mb-2 text-transparent bg-clip-text`}
             style={{ backgroundImage: currentThemeColors.gradient }}
         >
           {currentText.appName}
         </h1>
-        <p className={`text-lg text-text-secondary mb-8`}>
+        <p className={`text-lg sm:text-xl text-text-secondary mb-8`}>
           {currentText.poweredBy}
         </p>
 
-        <h2 className={`text-2xl font-semibold mb-6 text-text`}>
+        <h2 className={`text-2xl sm:text-3xl font-semibold mb-6 text-text`}>
           {currentText.loginHeader}
         </h2>
 

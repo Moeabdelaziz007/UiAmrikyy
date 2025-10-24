@@ -112,7 +112,7 @@ const Taskbar: React.FC<TaskbarProps> = ({ onToggleAppLauncher }) => {
 
           <div>
             <div>{currentTime.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' })}</div>
-            <div className="text-xs">{currentTime.toLocaleDateString(lang, { year: 'numeric', month: 'short', day: 'numeric' })}</div>
+            <div className="text-xs hidden sm:block">{currentTime.toLocaleDateString(lang, { year: 'numeric', month: 'short', day: 'numeric' })}</div>
           </div>
         </div>
       </motion.div>

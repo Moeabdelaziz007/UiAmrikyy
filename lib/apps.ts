@@ -4,10 +4,10 @@ import { AppDefinition } from '../types';
 import { translations } from './i18n';
 
 // Import Icons
-import { MapPinIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon } from '../components/IconComponents';
+import { PlaneTakeoffIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon, UsersIcon } from '../components/IconComponents';
 
 // Import App Components
-import NavigatorAgentUI from '../components/agents/NavigatorAgentUI';
+import TravelAgentUI from '../components/agents/TravelAgentUI';
 import VisionAgentUI from '../components/agents/VisionAgentUI';
 import ResearchAgentUI from '../components/agents/ResearchAgentUI';
 import TranslatorAgentUI from '../components/agents/TranslatorAgentUI';
@@ -23,10 +23,11 @@ import TerminalApp from '../apps/Terminal';
 import SettingsApp from '../apps/Settings';
 import TaskHistoryApp from '../components/apps/TaskHistoryApp';
 import ChatbotApp from '../apps/ChatbotApp';
+import NexusApp from '../apps/NexusApp';
 
 
 export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
-  navigator: NavigatorAgentUI,
+  travel: TravelAgentUI,
   vision: VisionAgentUI,
   research: ResearchAgentUI,
   translator: TranslatorAgentUI,
@@ -41,10 +42,19 @@ export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   settings: SettingsApp,
   taskHistory: TaskHistoryApp,
   chatbot: ChatbotApp,
+  nexus: NexusApp,
 };
 
 export const allApps: AppDefinition[] = [
   // Agents
+  { 
+    id: 'nexus', 
+    name: { en: translations.agents.nexus.en.name, ar: translations.agents.nexus.ar.name }, 
+    description: { en: translations.agents.nexus.en.description, ar: translations.agents.nexus.ar.description }, 
+    icon: UsersIcon, 
+    color: 'pink',
+    component: NexusApp,
+  },
   { 
     id: 'chatbot', 
     name: { en: translations.agents.chatbot.en.name, ar: translations.agents.chatbot.ar.name }, 
@@ -54,12 +64,12 @@ export const allApps: AppDefinition[] = [
     component: ChatbotApp,
   },
   { 
-    id: 'navigator', 
-    name: { en: translations.agents.navigator.en.name, ar: translations.agents.navigator.ar.name }, 
-    description: { en: translations.agents.navigator.en.description, ar: translations.agents.navigator.ar.description }, 
-    icon: MapPinIcon, 
+    id: 'travel', 
+    name: { en: translations.agents.travel.en.name, ar: translations.agents.travel.ar.name }, 
+    description: { en: translations.agents.travel.en.description, ar: translations.agents.travel.ar.description }, 
+    icon: PlaneTakeoffIcon, 
     color: 'blue',
-    component: NavigatorAgentUI,
+    component: TravelAgentUI,
   },
   { 
     id: 'vision', 

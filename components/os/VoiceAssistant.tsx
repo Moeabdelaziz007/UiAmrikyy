@@ -73,7 +73,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isVisible, onClose }) =
     };
 
     const handleExecuteWorkflow = async (prompt: string): Promise<string> => {
-        setFeedbackText(lang === 'en' ? `Planning: "${prompt}"` : `تخطيط: "${prompt}"`);
+        setFeedbackText(lang === 'en' ? `Refining goal & planning workflow...` : `تحسين الهدف وتخطيط سير العمل...`);
         let stepOutputs: Record<string, any> = {};
         try {
             const planResponse = await fetch(`http://localhost:3000/api/orchestrator`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
@@ -98,6 +98,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isVisible, onClose }) =
             let summary = `I've completed the workflow.`;
             if (typeof finalResult === 'object' && finalResult !== null) {
                 if (finalResult.summary) summary = finalResult.summary;
+                else if (finalResult.text) summary = finalResult.text; // For agents that return a text object
                 else if (finalResult.translatedText) summary = `The translation is: ${finalResult.translatedText}`;
                 else if (finalResult.results?.length > 0) summary = `I found ${finalResult.results.length} results. The top one is ${finalResult.results[0].name || finalResult.results[0].title}.`;
                 else if (finalResult.message) summary = finalResult.message;
@@ -144,9 +145,22 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isVisible, onClose }) =
         setFeedbackText(lang === 'en' ? 'Connecting...' : 'جارٍ الاتصال...');
         try {
             if (!aiRef.current) aiRef.current = new GoogleGenAI({apiKey: process.env.API_KEY});
+
+            const systemInstruction = `You are a helpful and friendly AI assistant integrated into an operating system. You can open applications and execute complex workflows.
+- When you use the 'openApp' tool, confirm the action by saying "Opening [appName]".
+- When you use the 'executeWorkflow' tool, keep the user informed. Once the workflow is complete, a summary of the result will be provided back to you. You MUST verbally communicate this summary back to the user in a natural, conversational way.
+- Be concise and friendly.`;
+
             const sessionPromise = aiRef.current.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-                config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } }, inputAudioTranscription: {}, outputAudioTranscription: {}, tools: [{ functionDeclarations: [openAppFunctionDeclaration, executeWorkflowFunctionDeclaration] }] },
+                config: { 
+                    systemInstruction,
+                    responseModalities: [Modality.AUDIO], 
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } }, 
+                    inputAudioTranscription: {}, 
+                    outputAudioTranscription: {}, 
+                    tools: [{ functionDeclarations: [openAppFunctionDeclaration, executeWorkflowFunctionDeclaration] }] 
+                },
                 callbacks: {
                     onopen: async () => {
                         setState('listening'); setFeedbackText(''); setUserTranscript(''); setModelTranscript('');
@@ -176,7 +190,7 @@ const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ isVisible, onClose }) =
                         const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData.data;
                         if (audioData) {
                             setState('speaking');
-                            if (!outputAudioContextRef.current) outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+                            if (!outputAudioContextRef.current || outputAudioContextRef.current.state === 'closed') outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
                             const ctx = outputAudioContextRef.current;
                             nextStartTimeRef.current = Math.max(nextStartTimeRef.current, ctx.currentTime);
                             const audioBuffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);

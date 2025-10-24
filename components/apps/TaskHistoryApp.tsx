@@ -115,13 +115,13 @@ const TaskHistoryApp: React.FC = () => {
       className="h-full flex flex-col"
       style={{ background: theme.colors.background, color: theme.colors.text }}
     >
-      <header className="flex items-center justify-between p-4 border-b flex-shrink-0 gap-4" style={{ borderColor: theme.colors.border }}>
+      <header className="flex items-center justify-between p-4 border-b flex-shrink-0 gap-4 flex-wrap sm:flex-nowrap" style={{ borderColor: theme.colors.border }}>
         <div className="flex items-center gap-2 flex-shrink-0">
           <History className="w-6 h-6 text-primary" style={{color: theme.colors.primary}} />
           <h1 className="text-xl font-bold">{currentText.taskHistory}</h1>
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 order-3 sm:order-2 w-full sm:w-auto">
             <input 
               type="text"
               placeholder={currentText.searchHistory}
@@ -134,7 +134,7 @@ const TaskHistoryApp: React.FC = () => {
 
         <button
           onClick={clearHistory}
-          className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border bg-surface hover:bg-background transition-colors disabled:opacity-50 flex-shrink-0"
+          className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border bg-surface hover:bg-background transition-colors disabled:opacity-50 flex-shrink-0 order-2 sm:order-3"
           style={{ borderColor: theme.colors.border }}
           disabled={history.length === 0}
         >

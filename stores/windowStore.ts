@@ -44,15 +44,14 @@ const useWindowStore = create<WindowState>()(
         const { windows, focusWindow } = get();
         
         // Check if a window for this app is already open
-        // FIX: Cast `windows` to a strongly typed record to ensure Object.values returns a typed array.
-        // This resolves the issue where `existingWindow` was being inferred as `unknown`.
         const existingWindow = Object.values(windows as Record<string, WindowData>).find((w) => w.appId === app.id);
         
         if (existingWindow) {
             focusWindow(existingWindow.id);
             return;
         }
-
+        
+        const isMobile = window.innerWidth < 768;
         const newId = `${app.id}-${Date.now()}`;
         const newZIndex = get().highestZIndex + 1;
         
@@ -62,11 +61,11 @@ const useWindowStore = create<WindowState>()(
           title: app.name.en, // The title is now correctly localized when passed to Window.tsx
           icon: app.icon,
           position: { 
-            x: 50 + (Object.keys(windows).length % 10) * 30, 
-            y: 50 + (Object.keys(windows).length % 10) * 30 
+            x: 50 + (Object.keys(windows).length % 5) * 40, 
+            y: 50 + (Object.keys(windows).length % 5) * 40 
           },
           size: { width: 800, height: 600 },
-          state: 'normal',
+          state: isMobile ? 'maximized' : 'normal',
           zIndex: newZIndex,
           initialLaunch: true, // This can be used for initial animations/positioning
         };

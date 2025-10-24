@@ -1,10 +1,11 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { LanguagesIcon, MessageSquare, Mic, Volume2 } from 'lucide-react'; // Using Lucide-React icons
 import { LanguageContext } from '../../App';
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
 import { TaskHistoryEntry } from '../../types';
+import { decode, decodeAudioData } from '../../utils/audio';
 
 interface TranslatorAgentUIProps {
   onTaskComplete: (entry: TaskHistoryEntry) => void;
@@ -23,6 +24,8 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
   const [audioInput, setAudioInput] = useState('');
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // FIX: Update mockOutput parameter type to allow Record<string, any>
   const mockExecuteTask = async (
@@ -78,13 +81,67 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
     );
   };
 
-  const handleTextToVoice = () => {
+  const handleTextToVoice = async () => {
     if (!textToTranslate || !targetLang) return;
-    mockExecuteTask(
-      currentText.tasks.textToVoice,
-      { text: textToTranslate, language: targetLang },
-      currentText.mockResults.textToVoice
-    );
+    setIsLoading(true);
+    setResult('');
+    try {
+        const response = await fetch('http://localhost:3000/api/agents/translator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'textToVoice',
+                text: textToTranslate,
+                language: targetLang,
+            })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to generate speech');
+        }
+        const data = await response.json();
+
+        if (data.audioContent) {
+            if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+                audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            }
+            const audioCtx = audioContextRef.current;
+            const audioBuffer = await decodeAudioData(decode(data.audioContent), audioCtx, 24000, 1);
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioCtx.destination);
+            source.start();
+            setResult(currentText.mockResults.textToVoice as string);
+        } else {
+            throw new Error('No audio content received.');
+        }
+        
+        onTaskComplete({
+          id: Date.now().toString(),
+          agentId: 'translator',
+          agentName: currentText.name,
+          taskType: currentText.tasks.textToVoice,
+          taskInput: { text: textToTranslate, language: targetLang },
+          taskOutput: 'Audio generated and played.',
+          timestamp: new Date().toISOString(),
+          status: 'success',
+        });
+    } catch (error: any) {
+        setResult(`Error: ${error.message}`);
+        onTaskComplete({
+          id: Date.now().toString(),
+          agentId: 'translator',
+          agentName: currentText.name,
+          taskType: currentText.tasks.textToVoice,
+          taskInput: { text: textToTranslate, language: targetLang },
+          taskOutput: `Error: ${error.message}`,
+          timestamp: new Date().toISOString(),
+          status: 'error',
+          errorMessage: error.message,
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   const inputClass = `w-full p-2 rounded-md border text-text bg-background focus:ring-2 focus:ring-primary focus:border-transparent`;

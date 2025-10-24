@@ -159,7 +159,7 @@ const ResearchAgentUI: React.FC<ResearchAgentUIProps> = ({ onTaskComplete }) => 
           style={{ borderColor: currentThemeColors.border }}
           rows={2}
         />
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button onClick={() => handleLocationQuery(null)} disabled={isLoading || !locationQuery} className={buttonClass}>
             {isLoading ? globalText.loading : globalText.search || 'Search'}
           </button>
