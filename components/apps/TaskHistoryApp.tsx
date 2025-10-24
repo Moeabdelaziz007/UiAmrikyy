@@ -1,17 +1,24 @@
 import React, { useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { History, Trash2, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { History, Trash2, CheckCircle, XCircle, ChevronDown, ChevronUp, Sparkles, AlertTriangle, Loader } from 'lucide-react';
 import { LanguageContext } from '../../App';
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
 import useTaskHistoryStore from '../../stores/taskHistoryStore';
-import { TaskHistoryEntry } from '../../types';
+import useSystemStore from '../../stores/systemStore';
+import { TaskHistoryEntry, GuardianAnalysis } from '../../types';
 
 const TaskEntry: React.FC<{ entry: TaskHistoryEntry }> = ({ entry }) => {
   const { theme } = useTheme();
   const { lang } = useContext(LanguageContext);
   const globalText = translations.global[lang];
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const { addTask } = useTaskHistoryStore();
+  const { incrementSuccessfulDebugs } = useSystemStore();
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isDebugging, setIsDebugging] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [analysis, setAnalysis] = useState<GuardianAnalysis | null>(null);
 
   const formatTimestamp = (isoString: string) => {
     return new Date(isoString).toLocaleString(lang, {
@@ -24,9 +31,78 @@ const TaskEntry: React.FC<{ entry: TaskHistoryEntry }> = ({ entry }) => {
     if (typeof data === 'string') {
       return <p className="whitespace-pre-wrap">{data}</p>;
     }
-    // Pretty print JSON for objects
     return <pre className="whitespace-pre-wrap text-xs">{JSON.stringify(data, null, 2)}</pre>;
   };
+  
+  const handleDebug = async () => {
+    if (isDebugging) return;
+    setIsDebugging(true);
+    setAnalysis(null);
+    try {
+      const response = await fetch('http://localhost:3000/api/agents/guardian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ failedTask: entry }),
+      });
+      if (!response.ok) throw new Error('Guardian Agent failed to respond.');
+      const data: GuardianAnalysis = await response.json();
+      setAnalysis(data);
+    } catch (error) {
+      setAnalysis({
+        diagnosis: 'Failed to communicate with Guardian Agent.',
+        suggestion: (error as Error).message,
+      });
+    } finally {
+      setIsDebugging(false);
+    }
+  };
+  
+  const handleRetry = async () => {
+    if (!analysis?.retryInput) return;
+    setIsRetrying(true);
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/agents/${entry.agentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: entry.taskType, ...analysis.retryInput }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Retry attempt failed.');
+        }
+
+        addTask({
+            id: Date.now().toString(),
+            agentId: entry.agentId,
+            agentName: entry.agentName,
+            taskType: entry.taskType,
+            taskInput: analysis.retryInput,
+            taskOutput: data,
+            timestamp: new Date().toISOString(),
+            status: 'success',
+        });
+        incrementSuccessfulDebugs(); // Reward!
+
+    } catch (error: any) {
+        addTask({
+            id: Date.now().toString(),
+            agentId: entry.agentId,
+            agentName: entry.agentName,
+            taskType: entry.taskType,
+            taskInput: analysis.retryInput,
+            taskOutput: { error: error.message },
+            timestamp: new Date().toISOString(),
+            status: 'error',
+            errorMessage: error.message,
+        });
+    } finally {
+        setIsRetrying(false);
+    }
+};
+
 
   return (
     <motion.div
@@ -61,21 +137,55 @@ const TaskEntry: React.FC<{ entry: TaskHistoryEntry }> = ({ entry }) => {
             exit={{ height: 0, opacity: 0, marginTop: 0 }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm pt-3 border-t" style={{ borderColor: theme.colors.border }}>
-              <div>
-                <strong className="text-text-secondary">{globalText.input}:</strong>
-                <div className="mt-1 p-2 bg-background rounded max-h-40 overflow-auto">{renderData(entry.taskInput)}</div>
-              </div>
-              <div>
-                <strong className="text-text-secondary">{globalText.output}:</strong>
-                <div className="mt-1 p-2 bg-background rounded max-h-40 overflow-auto">{renderData(entry.taskOutput)}</div>
-              </div>
-              {entry.status === 'error' && entry.errorMessage && (
-                <div className="md:col-span-2">
-                  <strong className="text-error">{globalText.errorMessage}:</strong>
-                  <div className="mt-1 p-2 bg-error/10 text-error rounded">{entry.errorMessage}</div>
+            <div className="space-y-3 pt-3 border-t text-sm" style={{ borderColor: theme.colors.border }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <strong className="text-text-secondary">{globalText.input}:</strong>
+                        <div className="mt-1 p-2 bg-background rounded max-h-40 overflow-auto">{renderData(entry.taskInput)}</div>
+                    </div>
+                    <div>
+                        <strong className="text-text-secondary">{globalText.output}:</strong>
+                        <div className="mt-1 p-2 bg-background rounded max-h-40 overflow-auto">{renderData(entry.taskOutput)}</div>
+                    </div>
                 </div>
-              )}
+
+                {entry.status === 'error' && (
+                    <div className="p-3 bg-error/10 rounded-lg space-y-3">
+                        <div className="flex items-start gap-2 text-error">
+                            <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
+                            <div>
+                                <strong className="block">{globalText.errorMessage}:</strong>
+                                <p>{entry.errorMessage}</p>
+                            </div>
+                        </div>
+                        
+                        {!analysis && (
+                            <button onClick={handleDebug} disabled={isDebugging} className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border bg-surface hover:bg-background transition-colors text-primary" style={{borderColor: theme.colors.primary}}>
+                                {isDebugging ? <Loader size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                                {isDebugging ? globalText.debugging : globalText.askGuardian}
+                            </button>
+                        )}
+                    </div>
+                )}
+                 
+                {analysis && (
+                    <div className="p-3 bg-primary/10 rounded-lg space-y-3">
+                        <div>
+                            <strong className="text-primary">{globalText.guardianDiagnosis}:</strong>
+                            <p className="mt-1 text-text-secondary">{analysis.diagnosis}</p>
+                        </div>
+                        <div>
+                            <strong className="text-primary">{globalText.guardianSuggestion}:</strong>
+                            <p className="mt-1 text-text-secondary">{analysis.suggestion}</p>
+                        </div>
+                         {analysis.retryInput && (
+                            <button onClick={handleRetry} disabled={isRetrying} className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border bg-surface hover:bg-background transition-colors text-primary" style={{borderColor: theme.colors.primary}}>
+                                {isRetrying ? <Loader size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                                {globalText.retryWithSuggestion}
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
           </motion.div>
         )}

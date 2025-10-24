@@ -8,7 +8,8 @@ import { nexusEvents } from '../../../services/mockSocketService';
 import { Play, Pause, Send, Plus, Trash2, Wand2 } from 'lucide-react';
 import MediaMaestro from './MediaMaestro';
 
-const SharedMediaLounge: React.FC<{ onTaskComplete: (entry: TaskHistoryEntry) => void }> = ({ onTaskComplete }) => {
+// FIX: Changed to a named export to resolve a module resolution error.
+export const SharedMediaLounge: React.FC<{ onTaskComplete: (entry: TaskHistoryEntry) => void }> = ({ onTaskComplete }) => {
     const { lang } = useContext(LanguageContext);
     const { theme } = useTheme();
     const currentText = translations.agents.nexus[lang];
@@ -141,5 +142,3 @@ const SharedMediaLounge: React.FC<{ onTaskComplete: (entry: TaskHistoryEntry) =>
         </div>
     );
 };
-
-export default SharedMediaLounge;

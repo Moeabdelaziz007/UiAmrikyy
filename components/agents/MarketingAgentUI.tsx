@@ -51,6 +51,8 @@ const MarketingAgentUI: React.FC<MarketingAgentUIProps> = ({ onTaskComplete }) =
   const [dataToAnalyze, setDataToAnalyze] = useState('');
   const [metrics, setMetrics] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [analyticsFile, setAnalyticsFile] = useState<File | null>(null);
+
 
   const [result, setResult] = useState<MarketingResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -131,9 +133,23 @@ const MarketingAgentUI: React.FC<MarketingAgentUIProps> = ({ onTaskComplete }) =
     executeTask('campaignManager', { campaignGoal, budget, duration });
   };
 
-  const handleAnalyticsExpert = () => {
-    if (!dataToAnalyze) return;
-    executeTask('analyticsExpert', { dataToAnalyze, metrics, searchQuery });
+  const handleAnalyticsExpert = async () => {
+    if (!dataToAnalyze && !analyticsFile) return;
+
+    let fileDataPayload: { data: string, mimeType: string } | undefined = undefined;
+
+    if (analyticsFile) {
+        try {
+            const base64Data = await (window as any).fileToBase64(analyticsFile);
+            fileDataPayload = { data: base64Data, mimeType: analyticsFile.type };
+        } catch (error) {
+            console.error("Error converting file to base64", error);
+            setResult({ text: `Error: Failed to read file.`});
+            return;
+        }
+    }
+
+    executeTask('analyticsExpert', { dataToAnalyze, metrics, searchQuery, fileData: fileDataPayload });
   };
 
 
@@ -327,7 +343,14 @@ const MarketingAgentUI: React.FC<MarketingAgentUIProps> = ({ onTaskComplete }) =
               className={`${inputClass} mb-3`}
               style={{ borderColor: currentThemeColors.border }}
           />
-          <button onClick={handleAnalyticsExpert} disabled={isLoading || !dataToAnalyze} className={buttonClass}>
+          <input 
+            type="file"
+            accept=".csv,.json,.txt"
+            onChange={(e) => setAnalyticsFile(e.target.files ? e.target.files[0] : null)}
+            className={`${inputClass} mb-3 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20`}
+          />
+          {analyticsFile && <p className="text-xs text-text-secondary mb-2">Selected: {analyticsFile.name}</p>}
+          <button onClick={handleAnalyticsExpert} disabled={isLoading || (!dataToAnalyze && !analyticsFile)} className={buttonClass}>
               {isLoading ? globalText.loading : currentText.tasks.analyticsExpert}
           </button>
       </div>

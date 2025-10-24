@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { CodeIcon, LayoutGrid, Database, Cloud, Beaker, FileText, MonitorCheck, Wand2, Loader } from 'lucide-react'; // Added MonitorCheck for Code Reviewer
 import { LanguageContext } from '../../App';
-// FIX: Corrected import typo from '!from' to 'from'
+// FIX: Corrected a typo in the import statement for `useTheme`. The import was written as `!from` instead of `from`.
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
 import { TaskHistoryEntry } from '../../types';

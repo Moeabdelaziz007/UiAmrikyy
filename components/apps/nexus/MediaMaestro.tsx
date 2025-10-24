@@ -5,6 +5,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { translations } from '../../../lib/i18n';
 import { TaskHistoryEntry } from '../../../types';
 import { Wand2, Loader } from 'lucide-react';
+import { playBase64Audio } from '../../../utils/audio';
 
 interface MediaMaestroProps {
     videoTitle: string;
@@ -19,13 +20,30 @@ const MediaMaestro: React.FC<MediaMaestroProps> = ({ videoTitle, onTaskComplete 
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState('');
 
+    const speakText = async (text: string) => {
+        try {
+            const response = await fetch('http://localhost:3000/api/agents/translator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'textToVoice', text, language: lang })
+            });
+            if (!response.ok) throw new Error('Failed to generate audio');
+            const data = await response.json();
+            if (data.audioContent) {
+                playBase64Audio(data.audioContent);
+            }
+        } catch (error) {
+            console.error('TTS Error:', error);
+        }
+    };
+
     const handleAction = async (taskType: 'summarizeVideo' | 'contextualSearch') => {
         if (!videoTitle) return;
         setIsLoading(true);
         setResult('');
 
         try {
-            const response = await fetch(`/api/agents/media`, {
+            const response = await fetch(`http://localhost:3000/api/agents/media`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -40,6 +58,7 @@ const MediaMaestro: React.FC<MediaMaestroProps> = ({ videoTitle, onTaskComplete 
             }
             const data = await response.json();
             setResult(data.result);
+            speakText(data.result); // Speak the result
             onTaskComplete({
                 id: Date.now().toString(),
                 agentId: 'media',

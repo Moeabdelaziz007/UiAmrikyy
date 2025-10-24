@@ -1,11 +1,12 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LanguagesIcon, MessageSquare, Mic, Volume2, Square, Loader } from 'lucide-react'; // Using Lucide-React icons
+import { LanguagesIcon, Mic, Square, Loader } from 'lucide-react';
 import { LanguageContext } from '../../App';
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
 import { TaskHistoryEntry } from '../../types';
-import { decode, decodeAudioData } from '../../utils/audio';
+import { decode, decodeAudioData, encode } from '../../utils/audio';
+import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob as GenAIAPIBlob } from '@google/genai';
 
 interface TranslatorAgentUIProps {
   onTaskComplete: (entry: TaskHistoryEntry) => void;
@@ -24,97 +25,152 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentTask, setCurrentTask] = useState<string | null>(null);
-
-  const audioContextRef = useRef<AudioContext | null>(null);
   
-  // States for audio recording
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
+  // States for live transcription
+  const [transcription, setTranscription] = useState('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const sessionRef = useRef<LiveSession | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const finalTranscriptionRef = useRef('');
 
-  const startRecording = async () => {
-    if (isRecording) return;
+  useEffect(() => {
+    return () => {
+      stopTranscription(true);
+    };
+  }, []);
+
+  const toggleTranscription = () => {
+    if (isTranscribing) {
+      stopTranscription();
+    } else {
+      startTranscription();
+    }
+  };
+
+  const startTranscription = async () => {
+    setIsTranscribing(true);
+    setTranscription('');
+    setResult('');
+    finalTranscriptionRef.current = '';
+    setCurrentTask('voiceToText');
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorderRef.current = new MediaRecorder(stream);
-        audioChunksRef.current = [];
+        streamRef.current = stream;
 
-        mediaRecorderRef.current.ondataavailable = (event) => {
-            audioChunksRef.current.push(event.data);
-        };
-
-        mediaRecorderRef.current.onstop = async () => {
-            const mimeType = mediaRecorderRef.current?.mimeType || 'audio/webm';
-            const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-            const base64Audio = await (window as any).fileToBase64(audioBlob);
-            handleVoiceToText(base64Audio, mimeType);
-            // Stop media stream tracks
-            mediaRecorderRef.current?.stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorderRef.current.start();
-        setIsRecording(true);
-    } catch (err) {
-        console.error("Microphone access error:", err);
-        setResult("Error: Could not access microphone. Please grant permission.");
-    }
-  };
-
-  const stopRecording = () => {
-      if (mediaRecorderRef.current && isRecording) {
-          mediaRecorderRef.current.stop();
-          setIsRecording(false);
-      }
-  };
-  
-  const handleVoiceToText = async (base64Audio: string, mimeType: string) => {
-    setIsLoading(true);
-    setCurrentTask('voiceToText');
-    setResult('');
-    try {
-        const response = await fetch('http://localhost:3000/api/agents/translator', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                type: 'voiceToText',
-                audio: { data: base64Audio, mimeType }
-            })
-        });
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || 'Failed to transcribe audio');
+        if (!process.env.API_KEY) {
+            throw new Error("API_KEY environment variable not set.");
         }
-        const data = await response.json();
-        setResult(data.transcription);
-        onTaskComplete({
-          id: Date.now().toString(),
-          agentId: 'translator',
-          agentName: currentText.name,
-          taskType: currentText.tasks.voiceToText,
-          taskInput: { audio: `[${mimeType}]` },
-          taskOutput: data.transcription,
-          timestamp: new Date().toISOString(),
-          status: 'success',
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+        const context = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+        audioContextRef.current = context;
+        
+        const sessionPromise = ai.live.connect({
+            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+            callbacks: {
+                onopen: () => {
+                    const source = context.createMediaStreamSource(stream);
+                    sourceNodeRef.current = source;
+                    const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
+                    scriptProcessorRef.current = scriptProcessor;
+
+                    scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                        const inputData = audioProcessingEvent.inputBuffer.getChannelData(0);
+                        const pcmBlob = createBlob(inputData);
+                        sessionPromise.then((session) => {
+                            session.sendRealtimeInput({ media: pcmBlob });
+                        });
+                    };
+
+                    source.connect(scriptProcessor);
+                    scriptProcessor.connect(context.destination);
+                },
+                onmessage: (message: LiveServerMessage) => {
+                    if (message.serverContent?.inputTranscription) {
+                        const transcriptPart = message.serverContent.inputTranscription;
+                        if (transcriptPart.isFinal) {
+                            finalTranscriptionRef.current += transcriptPart.text + ' ';
+                            setTranscription(finalTranscriptionRef.current);
+                        } else {
+                            setTranscription(finalTranscriptionRef.current + transcriptPart.text);
+                        }
+                    }
+                },
+                onerror: (e: any) => {
+                    setResult(`Error: ${e.message}`);
+                    stopTranscription();
+                },
+                onclose: () => {
+                    stopTranscription(true);
+                },
+            },
+            config: {
+                inputAudioTranscription: {},
+                responseModalities: [Modality.AUDIO],
+            },
         });
-    } catch (error: any) {
-        setResult(`Error: ${error.message}`);
-        onTaskComplete({
-          id: Date.now().toString(),
-          agentId: 'translator',
-          agentName: currentText.name,
-          taskType: currentText.tasks.voiceToText,
-          taskInput: { audio: `[${mimeType}]` },
-          taskOutput: `Error: ${error.message}`,
-          timestamp: new Date().toISOString(),
-          status: 'error',
-          errorMessage: error.message,
-        });
-    } finally {
-        setIsLoading(false);
-        setCurrentTask(null);
+        sessionRef.current = await sessionPromise;
+    } catch (err: any) {
+        setResult(`Error: Could not start transcription. ${err.message}`);
+        setIsTranscribing(false);
     }
   };
 
+  const stopTranscription = (calledFromClose = false) => {
+    if (!calledFromClose && sessionRef.current) {
+        sessionRef.current.close();
+    }
+    if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+    }
+    if (scriptProcessorRef.current) {
+        scriptProcessorRef.current.disconnect();
+        scriptProcessorRef.current.onaudioprocess = null;
+        scriptProcessorRef.current = null;
+    }
+    if (sourceNodeRef.current) {
+        sourceNodeRef.current.disconnect();
+        sourceNodeRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+    }
+
+    sessionRef.current = null;
+    setIsTranscribing(false);
+    setCurrentTask(null);
+
+    if (finalTranscriptionRef.current.trim()) {
+        onTaskComplete({
+            id: Date.now().toString(),
+            agentId: 'translator',
+            agentName: currentText.name,
+            taskType: currentText.tasks.voiceToText,
+            taskInput: '[Live Audio Input]',
+            taskOutput: finalTranscriptionRef.current.trim(),
+            timestamp: new Date().toISOString(),
+            status: 'success',
+        });
+    }
+  };
+
+  function createBlob(data: Float32Array): GenAIAPIBlob {
+    const l = data.length;
+    const int16 = new Int16Array(l);
+    for (let i = 0; i < l; i++) {
+        int16[i] = data[i] * 32768;
+    }
+    return {
+        data: encode(new Uint8Array(int16.buffer)),
+        mimeType: 'audio/pcm;rate=16000',
+    };
+  }
 
   const handleTranslateText = () => {
     if (!textToTranslate || !targetLang) return;
@@ -134,7 +190,6 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
     );
   };
   
-  // FIX: Update mockOutput parameter type to allow Record<string, any>
   const mockExecuteTask = async (
     taskType: string,
     taskInput: string | Record<string, any>,
@@ -144,7 +199,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
   ) => {
     setIsLoading(true);
     setResult('');
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsLoading(false);
     setResult(isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)));
 
@@ -162,7 +217,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
   };
 
   const handleTextToVoice = async () => {
-    if (!textToTranslate || !targetLang) return;
+    if (!textToTranslate) return;
     setIsLoading(true);
     setCurrentTask('textToVoice');
     setResult('');
@@ -183,10 +238,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
         const data = await response.json();
 
         if (data.audioContent) {
-            if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
-                audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-            }
-            const audioCtx = audioContextRef.current;
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             const audioBuffer = await decodeAudioData(decode(data.audioContent), audioCtx, 24000, 1);
             const source = audioCtx.createBufferSource();
             source.buffer = audioBuffer;
@@ -241,6 +293,51 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
       </h3>
       <p className={`text-text-secondary`}>{currentText.description}</p>
 
+      {/* Voice to Text - LIVE */}
+      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
+        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.voiceToText}</h4>
+        <p className="text-sm text-text-secondary mb-3">{lang === 'en' ? 'Click to start/stop live transcription.' : 'انقر لبدء/إيقاف النسخ المباشر.'}</p>
+        <button 
+          onClick={toggleTranscription}
+          className={`${buttonClass} flex items-center justify-center gap-2`}
+          style={{backgroundColor: isTranscribing ? theme.colors.error : theme.colors.primary}}
+          disabled={isLoading && currentTask !== 'voiceToText'}
+        >
+          {isTranscribing ? <Loader className="animate-spin"/> : (
+            isTranscribing ? <><Square size={16}/> {lang === 'en' ? 'Stop Transcribing' : 'إيقاف النسخ'}</> : <><Mic size={16}/> {lang === 'en' ? 'Start Transcribing' : 'بدء النسخ'}</>
+          )}
+        </button>
+        {(transcription || result) && (
+            <div className="mt-4 p-3 bg-background rounded-md border" style={{ borderColor: currentThemeColors.border }}>
+                <p className="whitespace-pre-wrap text-sm">{transcription || result}</p>
+            </div>
+        )}
+      </div>
+
+      {/* Text to Voice */}
+      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
+        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.textToVoice}</h4>
+        <textarea
+          placeholder={currentText.placeholders.text}
+          value={textToTranslate}
+          onChange={(e) => setTextToTranslate(e.target.value)}
+          className={`${inputClass} mb-3`}
+          style={{ borderColor: currentThemeColors.border }}
+          rows={3}
+        />
+        <input
+          type="text"
+          placeholder={currentText.placeholders.targetLang}
+          value={targetLang}
+          onChange={(e) => setTargetLang(e.target.value)}
+          className={`${inputClass} mb-3`}
+          style={{ borderColor: currentThemeColors.border }}
+        />
+        <button onClick={handleTextToVoice} disabled={isLoading || !textToTranslate} className={buttonClass}>
+          {isLoading && currentTask === 'textToVoice' ? globalText.loading : currentText.tasks.textToVoice}
+        </button>
+      </div>
+
       {/* Translate Text */}
       <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
         <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.translateText}</h4>
@@ -289,48 +386,8 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
         </button>
       </div>
 
-      {/* Voice to Text */}
-      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.voiceToText}</h4>
-        <p className="text-sm text-text-secondary mb-3">{lang === 'en' ? 'Click the button to start/stop recording.' : 'انقر على الزر لبدء/إيقاف التسجيل.'}</p>
-        <button 
-          onClick={isRecording ? stopRecording : startRecording} 
-          disabled={isLoading && currentTask === 'voiceToText'}
-          className={`${buttonClass} flex items-center justify-center gap-2 ${isRecording ? 'bg-red-500' : ''}`}
-          style={{backgroundColor: isRecording ? theme.colors.error : theme.colors.primary}}
-        >
-          {isLoading && currentTask === 'voiceToText' ? <Loader className="animate-spin"/> : (
-            isRecording ? <><Square size={16}/> {lang === 'en' ? 'Stop Recording' : 'إيقاف التسجيل'}</> : <><Mic size={16}/> {lang === 'en' ? 'Start Recording' : 'بدء التسجيل'}</>
-          )}
-        </button>
-      </div>
 
-      {/* Text to Voice */}
-      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.textToVoice}</h4>
-        <textarea
-          placeholder={currentText.placeholders.text}
-          value={textToTranslate}
-          onChange={(e) => setTextToTranslate(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={3}
-        />
-        <input
-          type="text"
-          placeholder={currentText.placeholders.targetLang}
-          value={targetLang}
-          onChange={(e) => setTargetLang(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-        />
-        <button onClick={handleTextToVoice} disabled={isLoading || !textToTranslate || !targetLang} className={buttonClass}>
-          {isLoading && currentTask === 'textToVoice' ? globalText.loading : currentText.tasks.textToVoice}
-        </button>
-      </div>
-
-
-      {result && (
+      {result && currentTask !== 'voiceToText' && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}

@@ -5,6 +5,7 @@ import { translations } from '../../../lib/i18n';
 import { TaskHistoryEntry } from '../../../types';
 import { nexusEvents } from '../../../services/mockSocketService';
 import { Code, BookOpen, MonitorCheck, Sparkles, Loader } from 'lucide-react';
+import { playBase64Audio } from '../../../utils/audio';
 
 interface CodingCoPilotProps {
     selectedCode: string;
@@ -20,6 +21,23 @@ const CodingCoPilot: React.FC<CodingCoPilotProps> = ({ selectedCode, onTaskCompl
     const [isLoading, setIsLoading] = useState(false);
     const [activeTask, setActiveTask] = useState<string | null>(null);
 
+    const speakText = async (text: string) => {
+        try {
+            const response = await fetch('http://localhost:3000/api/agents/translator', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'textToVoice', text, language: lang })
+            });
+            if (!response.ok) throw new Error('Failed to generate audio');
+            const data = await response.json();
+            if (data.audioContent) {
+                playBase64Audio(data.audioContent);
+            }
+        } catch (error) {
+            console.error('TTS Error:', error);
+        }
+    };
+
     const handleAction = async (taskType: 'generateDocumentation' | 'reviewCode' | 'refactorCode') => {
         if (!selectedCode) return;
         if (taskType === 'refactorCode' && !refactorInstruction) return;
@@ -28,17 +46,21 @@ const CodingCoPilot: React.FC<CodingCoPilotProps> = ({ selectedCode, onTaskCompl
         setActiveTask(taskType);
 
         let taskInput: Record<string, any> = { code: selectedCode };
-        if (taskType === 'generateDocumentation') {
-            taskInput = { codeDescription: selectedCode, docType: 'a clear, concise explanation' };
+        // Use a more specific task for explaining code, mapping to 'generateDocumentation' on the backend
+        let apiTaskType = taskType;
+        if (taskType === 'generateDocumentation') { // This is our 'Explain' task
+            apiTaskType = 'generateDocumentation';
+            taskInput = { codeDescription: selectedCode, docType: 'a clear, concise explanation of the code' };
         } else if (taskType === 'refactorCode') {
+            apiTaskType = 'refactorCode';
             taskInput = { code: selectedCode, instructions: refactorInstruction };
         }
 
         try {
-            const response = await fetch('/api/agents/coding', {
+            const response = await fetch('http://localhost:3000/api/agents/coding', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: taskType, ...taskInput }),
+                body: JSON.stringify({ type: apiTaskType, ...taskInput }),
             });
             if (!response.ok) {
                 const err = await response.json();
@@ -46,8 +68,9 @@ const CodingCoPilot: React.FC<CodingCoPilotProps> = ({ selectedCode, onTaskCompl
             }
             const data = await response.json();
             
-            const aiResponse = `**${lang === 'ar' ? 'المساعد البرمجي' : 'AI Co-pilot'} (${taskType}):**\n\n${data.result}`;
+            const aiResponse = `**${lang === 'ar' ? 'المساعد البرمجي' : 'AI Co-pilot'} (${currentText.tasks[taskType as keyof typeof currentText.tasks]}):**\n\n${data.result}`;
             nexusEvents.emit('chat:message', { user: 'AI Co-pilot', text: aiResponse });
+            speakText(data.result); // Speak the result
 
             onTaskComplete({
                 id: Date.now().toString(), agentId: 'coding', agentName: 'Coding Co-pilot',
