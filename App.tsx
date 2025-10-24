@@ -27,7 +27,6 @@ export const NotificationContext = createContext<NotificationContextType>({
     setNotificationsEnabled: () => {},
 });
 
-// FIX: Define and export TTSContext to make it available to other components.
 // TTS Context
 interface TTSContextType {
     selectedVoice: string;
@@ -55,7 +54,6 @@ const AppProviders: React.FC = () => {
     const saved = localStorage.getItem('amrikyy-notifications-enabled');
     return saved === 'false' ? false : true;
   });
-  // FIX: Add state management for TTS settings.
   const [selectedVoice, setSelectedVoice] = useState<string>(() => {
     return localStorage.getItem('amrikyy-tts-voice') || 'Zephyr';
   });
@@ -69,7 +67,6 @@ const AppProviders: React.FC = () => {
     localStorage.setItem('amrikyy-notifications-enabled', String(notificationsEnabled));
   }, [notificationsEnabled]);
 
-  // FIX: Add useEffects for persisting TTS settings.
   useEffect(() => {
     localStorage.setItem('amrikyy-tts-voice', selectedVoice);
   }, [selectedVoice]);
@@ -98,14 +95,12 @@ const AppProviders: React.FC = () => {
 
   const languageContextValue = useMemo(() => ({ lang, setLang }), [lang]);
   const notificationContextValue = useMemo(() => ({ notificationsEnabled, setNotificationsEnabled }), [notificationsEnabled]);
-  // FIX: Create memoized value for TTSContext.
   const ttsContextValue = useMemo(() => ({ selectedVoice, setSelectedVoice, playbackSpeed, setPlaybackSpeed }), [selectedVoice, playbackSpeed]);
 
   return (
     <ThemeProvider>
       <LanguageContext.Provider value={languageContextValue}>
         <NotificationContext.Provider value={notificationContextValue}>
-          {/* FIX: Wrap application with TTSContext.Provider. */}
           <TTSContext.Provider value={ttsContextValue}>
             <AppContent isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} isOffline={isOffline} />
           </TTSContext.Provider>
