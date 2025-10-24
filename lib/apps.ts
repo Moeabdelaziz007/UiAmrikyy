@@ -4,10 +4,10 @@ import { AppDefinition } from '../types';
 import { translations } from './i18n';
 
 // Import Icons
-import { PlaneTakeoffIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon, UsersIcon } from '../components/IconComponents';
+import { PlaneTakeoffIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon, UsersIcon, ScrollTextIcon } from '../components/IconComponents';
 
 // Import App Components
-import TravelAgentUI from '../components/agents/TravelAgentUI';
+import TravelAgentUI from '../components/agents/NavigatorAgentUI';
 import VisionAgentUI from '../components/agents/VisionAgentUI';
 import ResearchAgentUI from '../components/agents/ResearchAgentUI';
 import TranslatorAgentUI from '../components/agents/TranslatorAgentUI';
@@ -24,6 +24,7 @@ import SettingsApp from '../apps/Settings';
 import TaskHistoryApp from '../components/apps/TaskHistoryApp';
 import ChatbotApp from '../apps/ChatbotApp';
 import NexusApp from '../apps/NexusApp';
+import ContentCreatorApp from '../components/ContentCreatorApp';
 
 
 export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
@@ -43,6 +44,7 @@ export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   taskHistory: TaskHistoryApp,
   chatbot: ChatbotApp,
   nexus: NexusApp,
+  contentCreator: ContentCreatorApp,
 };
 
 export const allApps: AppDefinition[] = [
@@ -62,6 +64,14 @@ export const allApps: AppDefinition[] = [
     icon: MessageSquareIcon, 
     color: 'green',
     component: ChatbotApp,
+  },
+   { 
+    id: 'contentCreator', 
+    name: { en: translations.agents.contentCreator.en.name, ar: translations.agents.contentCreator.ar.name }, 
+    description: { en: translations.agents.contentCreator.en.description, ar: translations.agents.contentCreator.ar.description }, 
+    icon: ScrollTextIcon, 
+    color: 'orange',
+    component: ContentCreatorApp,
   },
   { 
     id: 'travel', 

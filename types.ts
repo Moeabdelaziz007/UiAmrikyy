@@ -15,6 +15,14 @@ export interface TaskHistoryEntry {
   workflowStep?: number; // Optional: for multi-step workflows
 }
 
+// New type for Guardian Agent's analysis response
+export interface GuardianAnalysis {
+  diagnosis: string;
+  suggestion: string;
+  retryInput?: Record<string, any>;
+}
+
+
 // New type for application window data
 export interface WindowData {
   id: string;

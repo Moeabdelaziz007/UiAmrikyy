@@ -94,6 +94,20 @@ export const translations: {
       start: "Start",
       settings: "Settings", // General settings button in Taskbar/Desktop
       sources: "Sources",
+      // Guardian Agent & Self-Healing
+      askGuardian: "Ask Guardian to Debug",
+      debugging: "Guardian is analyzing...",
+      guardianDiagnosis: "Guardian's Diagnosis",
+      guardianSuggestion: "Guardian's Suggestion",
+      retryWithSuggestion: "Retry with Suggestion",
+      // System Health
+      systemHealth: "System Health",
+      totalTasks: "Total Tasks",
+      successfulTasks: "Successful",
+      failedTasks: "Failed",
+      reliability: "Reliability",
+      successfulDebugs: "Successful Debugs",
+      system: "System",
     },
     ar: {
       appName: "نظام التشغيل Amrikyy QuantumOS",
@@ -167,9 +181,57 @@ export const translations: {
       start: "ابدأ",
       settings: "الإعدادات",
       sources: "المصادر",
+      // Guardian Agent & Self-Healing
+      askGuardian: "اطلب من الحارس التصحيح",
+      debugging: "الحارس يقوم بالتحليل...",
+      guardianDiagnosis: "تشخيص الحارس",
+      guardianSuggestion: "اقتراح الحارس",
+      retryWithSuggestion: "أعد المحاولة مع الاقتراح",
+      // System Health
+      systemHealth: "صحة النظام",
+      totalTasks: "مجموع المهام",
+      successfulTasks: "الناجحة",
+      failedTasks: "الفاشلة",
+      reliability: "الموثوقية",
+      successfulDebugs: "التصحيحات الناجحة",
+      system: "النظام",
     },
   },
   agents: {
+    contentCreator: { // NEW CONTENT CREATOR AGENT
+      en: {
+        name: "Content Creator",
+        description: "Generate content grounded in your source documents, like NotebookLM.",
+        tasks: {
+          generateFromSources: "Generate from Sources",
+        },
+        placeholders: {
+          uploadPrompt: "Upload one or more source files (.txt, .md)",
+          queryPrompt: "Ask a question about your sources...",
+          yourSources: "Your Sources",
+          addSources: "Add Sources",
+          noSources: "Upload documents to begin.",
+          ask: "Ask",
+        },
+        mockResults: {},
+      },
+      ar: {
+        name: "صانع المحتوى",
+        description: "أنشئ محتوى مستندًا إلى مستنداتك المصدر، مثل NotebookLM.",
+        tasks: {
+          generateFromSources: "أنشئ من المصادر",
+        },
+        placeholders: {
+          uploadPrompt: "قم بتحميل ملف مصدر واحد أو أكثر (.txt, .md)",
+          queryPrompt: "اطرح سؤالاً عن مصادرك...",
+          yourSources: "مصادرك",
+          addSources: "إضافة مصادر",
+          noSources: "قم بتحميل المستندات للبدء.",
+          ask: "اسأل",
+        },
+        mockResults: {},
+      },
+    },
     nexus: { // NEW NEXUS AGENT
       en: {
         name: "The Nexus",
@@ -278,7 +340,7 @@ export const translations: {
           createItinerary: "Plan Itinerary",
           findFlights: "Find Flights",
           findHotels: "Find Hotels",
-          findPlaces: "Find Places",
+          findPlacesOfInterest: "Find Places",
           getDirections: "Get Directions",
         },
         placeholders: {
@@ -303,7 +365,7 @@ export const translations: {
           createItinerary: "تخطيط مسار الرحلة",
           findFlights: "البحث عن رحلات",
           findHotels: "البحث عن فنادق",
-          findPlaces: "البحث عن أماكن",
+          findPlacesOfInterest: "البحث عن أماكن",
           getDirections: "الحصول على الاتجاهات",
         },
         placeholders: {
@@ -675,6 +737,7 @@ export const translations: {
           testFramework: "Test Framework (e.g., 'Jest', 'Pytest')",
           codeDescription: "Code description or function signature (e.g., 'User registration function')",
           codeToReview: "Paste code to be reviewed here (e.g., JavaScript function, Python script)",
+          docType: "Type of documentation (e.g., 'README.md', 'API Reference', 'User Guide')",
         },
         mockResults: { // These are now illustrative, real data comes from Gemini
           generatedUI: "Generated React component for a login form:\n```jsx\n// React Login Form Code\n```",
@@ -709,6 +772,7 @@ export const translations: {
           testFramework: "إطار عمل الاختبار (مثال: 'Jest', 'Pytest')",
           codeDescription: "وصف الكود أو توقيع الدالة (مثال: 'دالة تسجيل المستخدم')",
           codeToReview: "الصق الكود للمراجعة هنا (مثال: دالة JavaScript، نص Python)",
+          docType: "نوع التوثيق (e.g., 'README.md', 'API Reference', 'User Guide')",
         },
         mockResults: { // These are now illustrative, real data comes from Gemini
           generatedUI: "تم إنشاء مكون React لنموذج تسجيل الدخول:\n```jsx\n// كود نموذج تسجيل الدخول React\n```",
@@ -824,6 +888,26 @@ export const translations: {
             groundingChunks: [{ web: { uri: "https://analytics.google.com/analytics/web/", title: "تحليلات جوجل" } }]
           },
         },
+      },
+    },
+     guardian: { // NEW GUARDIAN AGENT
+      en: {
+        name: "Guardian Agent",
+        description: "Analyzes and debugs failed agent tasks.",
+        tasks: {
+          debugTask: "Debug Task",
+        },
+        placeholders: {},
+        mockResults: {},
+      },
+      ar: {
+        name: "العميل الحارس",
+        description: "يحلل ويصحح مهام الوكيل الفاشلة.",
+        tasks: {
+          debugTask: "تصحيح المهمة",
+        },
+        placeholders: {},
+        mockResults: {},
       },
     },
   },
