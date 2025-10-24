@@ -61,3 +61,33 @@ export function encode(bytes: Uint8Array): string {
   }
   return btoa(binary);
 }
+
+// Singleton AudioContext for TTS playback
+let audioContext: AudioContext | null = null;
+
+/**
+ * Plays a base64 encoded string of raw PCM audio data.
+ * @param base64Audio The base64 encoded audio string.
+ * @param sampleRate The sample rate of the audio (defaults to 24000 for Gemini TTS).
+ */
+export const playBase64Audio = async (base64Audio: string, sampleRate = 24000) => {
+    if (!base64Audio) return;
+    try {
+        if (!audioContext || audioContext.state === 'closed') {
+            audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate });
+        }
+        const audioCtx = audioContext;
+        // Ensure context is running (especially needed after user interaction)
+        if (audioCtx.state === 'suspended') {
+            await audioCtx.resume();
+        }
+
+        const audioBuffer = await decodeAudioData(decode(base64Audio), audioCtx, sampleRate, 1);
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+        source.start();
+    } catch (error) {
+        console.error("Failed to play audio:", error);
+    }
+};
