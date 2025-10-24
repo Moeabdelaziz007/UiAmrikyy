@@ -21,6 +21,7 @@ const useTTS = () => {
 
         return () => {
             window.speechSynthesis.onvoiceschanged = null;
+            window.speechSynthesis.cancel(); // Stop any speech on unmount
         };
     }, []);
 

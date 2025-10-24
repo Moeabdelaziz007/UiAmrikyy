@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { VideoIcon, Film, Image, Wand2, Upload, Loader } from 'lucide-react';
+import { VideoIcon, Film, Image, Wand2, Upload, Loader, Youtube } from 'lucide-react';
 import { LanguageContext } from '../../App';
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
@@ -38,6 +38,12 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
   const [editPrompt, setEditPrompt] = useState('');
   const [originalEditImage, setOriginalEditImage] = useState<string | null>(null);
   const [editedImage, setEditedImage] = useState<string | null>(null);
+  
+  // Video Analysis State
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoAnalysisPrompt, setVideoAnalysisPrompt] = useState('');
+  const [videoAnalysisResult, setVideoAnalysisResult] = useState('');
+
 
   const [isLoading, setIsLoading] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
@@ -141,7 +147,7 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
         agentName: currentText.name,
         taskType: currentText.tasks[taskKey],
         taskInput,
-        taskOutput: `Output for ${taskKey}`,
+        taskOutput: data,
         timestamp: new Date().toISOString(),
         status: 'success',
       });
@@ -249,6 +255,21 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
       }
   };
 
+  const handleAnalyzeVideo = async () => {
+    if (!videoUrl || !videoAnalysisPrompt) return;
+    setVideoAnalysisResult('');
+    try {
+        const data = await executeTask(
+            currentText.tasks.analyzeVideo,
+            { videoUrl, prompt: videoAnalysisPrompt },
+            'analyzeVideo'
+        );
+        setVideoAnalysisResult(data.result);
+    } catch (error) {
+        setVideoAnalysisResult(`Error: ${(error as Error).message}`);
+    }
+  };
+
 
   const inputClass = `w-full p-2 rounded-md border text-text bg-background focus:ring-2 focus:ring-primary focus:border-transparent`;
   const buttonClass = (taskLoading: boolean) => `w-full py-2 px-4 rounded-md text-white font-semibold bg-primary hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed`;
@@ -263,6 +284,39 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
         <VideoIcon className="w-6 h-6" /> {currentText.name}
       </h3>
       <p className={`text-text-secondary`}>{currentText.description}</p>
+
+      {/* Analyze Video (Gemini Pro) */}
+      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
+        <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}><Youtube className="w-5 h-5" />{currentText.tasks.analyzeVideo}</h4>
+        <input
+            type="text"
+            placeholder={currentText.placeholders.videoUrl}
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            className={`${inputClass} mb-3`}
+        />
+        <div className="relative">
+            <textarea
+                placeholder={currentText.placeholders.videoPrompt}
+                value={videoAnalysisPrompt}
+                onChange={(e) => setVideoAnalysisPrompt(e.target.value)}
+                className={`${inputClass} mb-3`}
+                rows={2}
+            />
+            <button
+                onClick={() => handleRefinePrompt(videoAnalysisPrompt, 'AI video analysis', setVideoAnalysisPrompt, 'videoAnalysisPrompt')}
+                disabled={isRefining || !videoAnalysisPrompt}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
+                title="Refine with AI"
+            >
+                {isRefining && refiningField === 'videoAnalysisPrompt' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
+            </button>
+        </div>
+        <button onClick={handleAnalyzeVideo} disabled={isLoading || !videoUrl || !videoAnalysisPrompt} className={buttonClass(isLoading)}>
+            {isLoading ? <Loader className="mx-auto animate-spin" /> : currentText.tasks.analyzeVideo}
+        </button>
+        {videoAnalysisResult && <p className="mt-4 p-2 bg-background rounded-md whitespace-pre-wrap">{videoAnalysisResult}</p>}
+      </div>
 
       {/* Generate Image (Imagen) */}
       <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>

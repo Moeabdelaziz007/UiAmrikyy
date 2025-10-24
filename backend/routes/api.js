@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 // Import the singleton instance of the service
 const orchestratorService = require('../services/agentOrchestrator'); 
-const NavigatorAgent = require('../agents/NavigatorAgent');
+const TravelAgent = require('../agents/TravelAgent');
 const VisionAgent = require('../agents/VisionAgent');
 const ResearchAgent = require('../agents/ResearchAgent');
 const runResearchAixTask = require('../agents/ResearchAgent').runAixTask; // Import the new function
@@ -15,11 +15,12 @@ const CodingAgent = require('../agents/CodingAgent');
 const MarketingAgent = require('../agents/MarketingAgent'); // Import MarketingAgent
 const ChatAgent = require('../agents/ChatAgent'); // Import ChatAgent
 const PromptEngineeringAgent = require('../agents/PromptEngineeringAgent'); // Import PromptEngineeringAgent
+const VoiceControlAgent = require('../agents/VoiceControlAgent'); // Import VoiceControlAgent
 const logger = require('../utils/logger');
 
 
 // Initialize agents
-const navigatorAgent = new NavigatorAgent();
+const travelAgent = new TravelAgent();
 const visionAgent = new VisionAgent();
 const researchAgent = new ResearchAgent();
 const translatorAgent = new TranslatorAgent();
@@ -31,6 +32,7 @@ const codingAgent = new CodingAgent();
 const marketingAgent = new MarketingAgent(); // Instantiate MarketingAgent
 const chatAgent = new ChatAgent();
 const promptEngineeringAgent = new PromptEngineeringAgent();
+const voiceControlAgent = new VoiceControlAgent();
 
 
 // --- Orchestrator Route ---
@@ -50,6 +52,21 @@ router.post('/orchestrator', async (req, res) => {
   }
 });
 
+// --- New Voice Command Route ---
+router.post('/voice-command', async (req, res) => {
+    const { command } = req.body;
+    if (!command) {
+        return res.status(400).json({ error: 'Command text is required' });
+    }
+    try {
+        const result = await voiceControlAgent.parseCommand(command);
+        res.json(result);
+    } catch (error) {
+        logger.error('Voice Command error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- Individual Agent Routes ---
 
 // Chat Agent
@@ -64,14 +81,13 @@ router.post('/agents/chat', async (req, res) => {
 });
 
 
-// Navigator Agent
-router.post('/agents/navigator', async (req, res) => {
-  const { type, origin, destination, location, placeType, address } = req.body;
+// Travel Agent (replaces Navigator)
+router.post('/agents/travel', async (req, res) => {
   try {
-    const result = await navigatorAgent.executeTask({ type, origin, destination, location, placeType, address });
+    const result = await travelAgent.executeTask(req.body);
     res.json(result);
   } catch (error) {
-    console.error('Navigator Agent error:', error);
+    logger.error('Travel Agent error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -101,9 +117,10 @@ router.post('/agents/research', async (req, res) => {
 
 // Translator Agent
 router.post('/agents/translator', async (req, res) => {
-  const { type, text, targetLang, sourceLang, audioFile, language } = req.body;
   try {
-    const result = await translatorAgent.executeTask({ type, text, targetLang, sourceLang, audioFile, language });
+    // Pass the entire request body to the agent.
+    // The agent is responsible for validating and extracting the needed properties for each task type.
+    const result = await translatorAgent.executeTask(req.body);
     res.json(result);
   } catch (error) {
     console.error('Translator Agent error:', error);

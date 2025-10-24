@@ -2,23 +2,24 @@
 const { getAi } = require('../services/geminiService');
 const { Type } = require('@google/genai');
 const logger = require('../utils/logger');
+const PromptEngineeringAgent = require('./PromptEngineeringAgent'); // Import the 'Prompt Artisan'
 
 // Define the capabilities of all Mini Agents for the Orchestrator's context
 const AGENT_TOOLBELT = `
-- **navigator**: 
+- **travel**: 
+  - createItinerary(prompt): Plans a detailed, day-by-day travel itinerary.
+  - findFlights(origin, destination, dates): Finds flights using real-time search.
+  - findHotels(location, dates, criteria): Finds hotels using real-time search.
+  - findPlacesOfInterest(location, placeType): Finds nearby places like 'restaurants' or 'museums'.
   - getDirections(origin, destination): Gets driving directions.
-  - findNearby(location, placeType): Finds nearby places like 'restaurants' or 'hotels'.
-  - geocode(address): Converts an address to coordinates.
 - **vision**:
   - analyzeImage(imageUrl, prompt): Describes an image.
   - extractText(imageUrl): Performs OCR on an image.
   - identifyLandmark(imageUrl): Identifies landmarks.
   - detectObjects(imageUrl): Detects objects in an image.
 - **research**:
-  - webSearch(query): Performs a web search.
-  - findHotels(location, filters): Searches for hotels.
-  - getReviews(placeName): Gets reviews for a place.
-  - comparePrices(itemName): Compares prices for an item.
+  - webSearch(query): Performs a general web search for up-to-date information.
+  - locationQuery(query, userLocation?): Performs a location-based search for places and information.
 - **translator**:
   - translateText(text, targetLang, sourceLang): Translates text.
   - detectLanguage(text): Detects the language of a text.
@@ -31,8 +32,10 @@ const AGENT_TOOLBELT = `
   - uploadFile(fileInput, filename): Uploads a file.
   - shareFile(fileId, email): Shares a file.
 - **media**:
+  - generateImage(prompt): Generates an image from a text prompt.
+  - generateVideo(prompt, image?, aspectRatio?): Generates a video from a text prompt and optional starting image.
+  - editImage(image, prompt): Edits an image based on a text prompt.
   - searchVideos(query): Searches for videos on YouTube.
-  - getVideoDetails(videoId): Gets details for a specific video.
 - **communicator**:
   - sendEmail(to, subject, body): Sends an email.
   - sendTelegramMessage(chatId, message): Sends a Telegram message.
@@ -61,11 +64,11 @@ const WORKFLOW_SCHEMA = {
           },
           agentId: {
             type: Type.STRING,
-            description: 'The ID of the agent to execute this step (e.g., "navigator", "research").'
+            description: 'The ID of the agent to execute this step (e.g., "travel", "research").'
           },
           taskType: {
             type: Type.STRING,
-            description: 'The specific task for the agent to perform (e.g., "getDirections", "webSearch").'
+            description: 'The specific task for the agent to perform (e.g., "createItinerary", "webSearch").'
           },
           taskInput: {
             type: Type.OBJECT,
@@ -85,6 +88,7 @@ class OrchestratorAgent {
     this.name = 'Orchestrator Agent';
     this.description = 'Understands user intent, generates dynamic workflows, and assigns tasks to Mini Agents using Gemini Pro.';
     this.model = 'gemini-2.5-pro'; // Use a powerful model for planning
+    this.promptEngineer = new PromptEngineeringAgent(); // Instantiate the 'Prompt Artisan'
   }
 
   /**
@@ -113,15 +117,27 @@ Your sole output must be a single JSON object that conforms to the provided sche
 - Do not add any commentary or explanation outside of the JSON object.`;
 
     try {
+      // Step 1: Refine the user's prompt with the 'Prompt Artisan'
+      logger.info(`[${this.name}] Refining prompt with PromptEngineeringAgent...`);
+      const refinedPromptResult = await this.promptEngineer.executeTask({
+          type: 'refinePrompt',
+          prompt: prompt,
+          context: 'High-level multi-agent workflow planning'
+      });
+      const refinedPrompt = refinedPromptResult.refinedPrompt;
+      logger.info(`[${this.name}] Original prompt: "${prompt}" | Refined prompt: "${refinedPrompt}"`);
+
+
+      // Step 2: Use the refined prompt to generate the workflow
       const ai = getAi();
       const response = await ai.models.generateContent({
         model: this.model,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: refinedPrompt }] }],
         config: {
             systemInstruction: systemInstruction,
             responseMimeType: 'application/json',
             responseSchema: WORKFLOW_SCHEMA,
-            thinkingConfig: { thinkingBudget: 8192 }, // Allocate significant thinking budget for planning
+            thinkingConfig: { thinkingBudget: 32768 }, // Allocate significant thinking budget for planning
         }
       });
       
@@ -153,9 +169,9 @@ Your sole output must be a single JSON object that conforms to the provided sche
         steps: [
           {
             id: 'step-1',
-            agentId: 'navigator',
-            taskType: 'findNearby',
-            taskInput: { location: 'Paris, France', placeType: 'hotel' },
+            agentId: 'travel',
+            taskType: 'findHotels',
+            taskInput: { location: 'Paris, France' },
           },
           {
             id: 'step-2',

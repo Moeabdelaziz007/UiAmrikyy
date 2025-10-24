@@ -38,6 +38,18 @@ class MediaAgent {
           if (!task.image || !task.prompt) throw new Error('Image and prompt are required for editImage.');
           return await this.editImage(task.image, task.prompt);
 
+        case 'summarizeVideo':
+            if (!task.title) throw new Error('Video title is required for summarizeVideo.');
+            return await this.summarizeVideo(task.title);
+
+        case 'contextualSearch':
+            if (!task.query) throw new Error('Query is required for contextualSearch.');
+            return await this.contextualSearch(task.query);
+        
+        case 'analyzeVideo':
+            if (!task.videoUrl || !task.prompt) throw new Error('Video URL and prompt are required.');
+            return await this.analyzeVideo(task.videoUrl, task.prompt);
+
         default:
           throw new Error(`Unknown task type for Media Agent: ${task.type}`);
       }
@@ -98,6 +110,44 @@ class MediaAgent {
     }
 
     throw new Error('Image editing failed to produce an image.');
+  }
+
+  async summarizeVideo(title) {
+    const ai = getAi();
+    logger.info(`[${this.name}] Summarizing video: "${title}"`);
+    const prompt = `Provide a concise, bullet-point summary of the YouTube video titled "${title}". Focus on the main topics and key takeaways.`;
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+    });
+    return { result: response.text };
+  }
+
+  async contextualSearch(query) {
+    const ai = getAi();
+    logger.info(`[${this.name}] Getting suggestions for: "${query}"`);
+    const prompt = `Based on the YouTube video titled "${query}", suggest 3 related videos that the user might also enjoy. Provide only the titles as a bulleted list.`;
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+    });
+    return { result: response.text };
+  }
+
+  async analyzeVideo(videoUrl, userPrompt) {
+    const ai = getAi();
+    logger.info(`[${this.name}] Analyzing video: "${videoUrl}"`);
+    const prompt = `You are a video analysis expert. Watch the video at the following URL and provide a detailed answer to the user's question.
+    Video URL: ${videoUrl}
+    User Question: "${userPrompt}"`;
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+        config: {
+            thinkingConfig: { thinkingBudget: 32768 }
+        }
+    });
+    return { result: response.text };
   }
 }
 

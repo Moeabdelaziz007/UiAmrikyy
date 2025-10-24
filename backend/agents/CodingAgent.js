@@ -26,7 +26,7 @@ class CodingAgent {
     this.icon = '💻';
     this.description = 'Super coder with 6 specialized sub-agents';
 
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-pro';
 
     if (!process.env.API_KEY) {
       logger.warn('[CodingAgent] API_KEY is not set. Coding Agent will not be able to make real API calls.');
@@ -163,8 +163,11 @@ Provide detailed code reviews with actionable improvements.
         case 'generateDocumentation': // Changed from GENERATE_DOCS to match frontend
           return await this.generateDocs(task, ai);
 
-        case 'reviewCode': // Renamed 'REVIEW_CODE' for specific task, but not directly used by UI yet
+        case 'reviewCode': 
           return await this.reviewCode(task.code, ai);
+
+        case 'refactorCode':
+          return await this.refactorCode(task, ai);
 
         // This would be orchestrated externally by a higher-level agent if needed
         case 'generateFullProject': 
@@ -202,8 +205,7 @@ Provide complete, runnable code.`;
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: 2000, // Adjust based on expected code length
-        thinkingConfig: { thinkingBudget: 500 },
+        thinkingConfig: { thinkingBudget: 32768 },
       }
     });
     const response = result.text; // Use .text to get string output
@@ -242,8 +244,7 @@ Provide complete, production-ready backend code/schema.`;
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: 2000,
-        thinkingConfig: { thinkingBudget: 500 },
+        thinkingConfig: { thinkingBudget: 32768 },
       }
     });
     const response = result.text;
@@ -282,8 +283,7 @@ Provide complete, production-ready deployment files.`;
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: 1500,
-        thinkingConfig: { thinkingBudget: 400 },
+        thinkingConfig: { thinkingBudget: 32768 },
       }
     });
     const response = result.text;
@@ -320,8 +320,7 @@ Provide complete, runnable test suite.`;
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: 1500,
-        thinkingConfig: { thinkingBudget: 400 },
+        thinkingConfig: { thinkingBudget: 32768 },
       }
     });
     const response = result.text;
@@ -359,8 +358,7 @@ Provide complete, well-formatted documentation.`;
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: 1800,
-        thinkingConfig: { thinkingBudget: 450 },
+        thinkingConfig: { thinkingBudget: 32768 },
       }
     });
     const response = result.text;
@@ -399,8 +397,7 @@ Be constructive and specific.`;
       model: this.modelName,
       contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: 2000,
-        thinkingConfig: { thinkingBudget: 500 },
+        thinkingConfig: { thinkingBudget: 32768 },
       }
     });
     const response = result.text;
@@ -413,6 +410,44 @@ Be constructive and specific.`;
       message: 'Code review completed successfully'
     };
   }
+
+  /**
+   * New Task: Refactor Code
+   */
+  async refactorCode(task, ai) {
+    const subAgent = this.subAgents.reviewer; // A reviewer is good at refactoring
+    const { code, instructions } = task;
+
+    const userPrompt = `Refactor the following code based on the provided instructions.
+Ensure the refactored code is clean, efficient, and maintains the original functionality unless instructed otherwise.
+
+Instructions: "${instructions}"
+
+Original Code:
+\`\`\`
+${code}
+\`\`\`
+
+Provide ONLY the refactored code block.`;
+
+    const result = await ai.models.generateContent({
+      model: this.modelName,
+      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
+      config: {
+        thinkingConfig: { thinkingBudget: 32768 },
+      }
+    });
+    const response = result.text;
+
+    return {
+      success: true,
+      subAgent: subAgent.name,
+      icon: subAgent.icon,
+      result: response,
+      message: 'Code refactored successfully'
+    };
+  }
+
 
   /**
    * Orchestrate all sub-agents for a full project

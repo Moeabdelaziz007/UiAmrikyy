@@ -557,12 +557,15 @@ export const translations: {
           generateVideo: "Generate Video (Veo)",
           editImage: "Edit Image (Gemini)",
           searchVideos: "Search YouTube",
+          analyzeVideo: "Analyze Video",
         },
         placeholders: {
           query: "Search query (e.g., Cairo travel vlogs)",
           videoId: "Video ID (e.g., abcdefg)",
           prompt: "Generation Prompt (e.g., a futuristic city)",
           editPrompt: "Edit instruction (e.g., add a retro filter)",
+          videoUrl: "YouTube URL",
+          videoPrompt: "What do you want to know about the video?",
         },
         mockResults: {
           generate: "Video/Image generated and ready.",
@@ -578,12 +581,15 @@ export const translations: {
           generateVideo: "إنشاء فيديو (Veo)",
           editImage: "تعديل صورة (Gemini)",
           searchVideos: "بحث يوتيوب",
+          analyzeVideo: "تحليل الفيديو",
         },
         placeholders: {
           query: "استعلام البحث (مثال: مدونات سفر القاهرة)",
           videoId: "معرف الفيديو (مثال: abcdefg)",
           prompt: "موجه الإنشاء (مثال: مدينة مستقبلية)",
           editPrompt: "تعليمات التعديل (مثال: أضف فلتر قديم)",
+          videoUrl: "رابط يوتيوب",
+          videoPrompt: "ماذا تريد أن تعرف عن الفيديو؟",
         },
         mockResults: {
           generate: "تم إنشاء الفيديو/الصورة وهي جاهزة.",

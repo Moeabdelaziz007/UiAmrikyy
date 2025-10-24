@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { TaskHistoryEntry } from '../types';
-import SharedMediaLounge from '../components/apps/nexus/SharedMediaLounge';
+// FIX: Changed to a named import to resolve module resolution error.
+import { SharedMediaLounge } from '../components/apps/nexus/SharedMediaLounge';
 import VibeCodingSpace from '../components/apps/nexus/VibeCodingSpace';
 import NexusSocialPanel from '../components/apps/nexus/NexusSocialPanel';
 import { LanguageContext } from '../App';
