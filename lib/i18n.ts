@@ -1,0 +1,726 @@
+// FIX: Define AgentData interface for dynamic access to agent translations
+export interface AgentData {
+  en: {
+    name: string;
+    description: string;
+    tasks: Record<string, string>;
+    placeholders: Record<string, string>;
+    mockResults: Record<string, string | Record<string, any>>; // Updated to allow object for mockResults
+  };
+  ar: {
+    name: string;
+    description: string;
+    tasks: Record<string, string>;
+    placeholders: Record<string, string>;
+    mockResults: Record<string, string | Record<string, any>>; // Updated to allow object for mockResults
+  };
+}
+
+// FIX: Update translations type to allow string indexing for agents
+export const translations: {
+  global: Record<'en' | 'ar', Record<string, string>>;
+  agents: Record<string, AgentData>;
+} = {
+  global: {
+    en: {
+      appName: "Amrikyy QuantumOS",
+      poweredBy: "Powered By Gemini Pro",
+      loginHeader: "Login to your AI OS",
+      usernamePlaceholder: "Username",
+      passwordPlaceholder: "Password",
+      loginButton: "Login",
+      loginError: "Invalid username or password. Try 'admin' and 'password'.",
+      loginPrompt: "Unlock the future of intelligent computing.",
+      loginAsGuest: "Login as Guest",
+      offline: "You are currently offline. Some features may be limited.",
+      miniAgentsHub: "Mini Agents Hub", // Renamed to App Launcher conceptually
+      taskHistory: "Task History",
+      taskHistoryDescription: "View and manage executed agent tasks.",
+      clearHistory: "Clear History",
+      noTasksYet: "No tasks executed yet.",
+      agent: "Agent",
+      task: "Task",
+      input: "Input",
+      output: "Output",
+      status: "Status",
+      success: "Success",
+      error: "Error",
+      errorMessage: "Error Message",
+      timestamp: "Timestamp",
+      loading: "AI is processing...",
+      // Settings
+      language: "Language",
+      english: "English",
+      arabic: "Arabic",
+      theme: "Theme",
+      notifications: "Notifications",
+      enableNotifications: "Enable Notifications",
+      ttsVoice: "TTS Voice",
+      ttsSpeed: "TTS Playback Speed",
+      // Main AI Orchestration
+      mainAITitle: "Gemini Pro Orchestrator",
+      mainAIPlaceholder: "Ask Gemini Pro to perform a complex task (e.g., 'Plan a 7-day trip to Egypt')",
+      mainAIButton: "Ask Gemini Pro",
+      aiPlanning: "Gemini Pro is planning your workflow...",
+      workflowStep: "Workflow Step",
+      orchestrationFailed: "Orchestration failed: ",
+      // Unified Settings Modal
+      generalSettings: "General",
+      agentSettings: "Agent Settings",
+      selectAgent: "Select Agent",
+      apiKey: "API Key",
+      defaultParameter: "Default Parameter",
+      saveSettings: "Save Settings",
+      settingsSaved: "Settings saved!",
+      selectAgentToConfigure: "Select an agent to configure its settings.",
+      // Telegram Integration
+      telegramNotificationSent: "Telegram notification sent!",
+      telegramChatId: "Telegram Chat ID",
+      telegramMessage: "Telegram Message",
+      // New OS UI elements
+      appLauncher: "App Launcher",
+      fileManager: "File Manager",
+      terminal: "Terminal",
+      minimize: "Minimize",
+      maximize: "Maximize",
+      close: "Close",
+      restore: "Restore",
+      dragWindow: "Drag Window",
+      noFilesFound: "No files or folders found.",
+      commandPrompt: "Enter command...",
+      terminalOutput: "Terminal Output",
+      start: "Start",
+      settings: "Settings", // General settings button in Taskbar/Desktop
+      sources: "Sources",
+    },
+    ar: {
+      appName: "نظام التشغيل Amrikyy QuantumOS",
+      poweredBy: "مدعوم من Gemini Pro",
+      loginHeader: "تسجيل الدخول إلى نظام التشغيل AI الخاص بك",
+      usernamePlaceholder: "اسم المستخدم",
+      passwordPlaceholder: "كلمة المرور",
+      loginButton: "تسجيل الدخول",
+      loginError: "اسم المستخدم أو كلمة المرور غير صحيحة. جرب 'admin' و 'password'.",
+      loginPrompt: "اطلق العنان لمستقبل الحوسبة الذكية.",
+      loginAsGuest: "تسجيل الدخول كضيف",
+      offline: "أنت غير متصل بالإنترنت حالياً. قد تكون بعض الميزات محدودة.",
+      miniAgentsHub: "مركز العملاء المصغر", // Renamed to App Launcher conceptually
+      taskHistory: "سجل المهام",
+      taskHistoryDescription: "عرض وإدارة مهام الوكيل المنفذة.",
+      clearHistory: "مسح السجل",
+      noTasksYet: "لم يتم تنفيذ أي مهام بعد.",
+      agent: "العميل",
+      task: "المهمة",
+      input: "الإدخال",
+      output: "الإخراج",
+      status: "الحالة",
+      success: "نجاح",
+      error: "خطأ",
+      errorMessage: "رسالة الخطأ",
+      timestamp: "التاريخ والوقت",
+      loading: "الذكاء الاصطناعي يعالج...",
+      // Settings
+      language: "اللغة",
+      english: "الإنجليزية",
+      arabic: "العربية",
+      theme: "السمة",
+      notifications: "الإشعارات",
+      enableNotifications: "تمكين الإشعارات",
+      ttsVoice: "صوت TTS",
+      ttsSpeed: "سرعة تشغيل TTS",
+      // Main AI Orchestration
+      mainAITitle: "منسق Gemini Pro",
+      mainAIPlaceholder: "اطلب من Gemini Pro أداء مهمة معقدة (مثال: 'خطط لرحلة 7 أيام إلى مصر')",
+      mainAIButton: "اسأل Gemini Pro",
+      aiPlanning: "Gemini Pro يخطط لسير عملك...",
+      workflowStep: "خطوة سير العمل",
+      orchestrationFailed: "فشل التنسيق: ",
+      // Unified Settings Modal
+      generalSettings: "عام",
+      agentSettings: "إعدادات العميل",
+      selectAgent: "اختر العميل",
+      apiKey: "مفتاح الـ API",
+      defaultParameter: "المعامل الافتراضي",
+      saveSettings: "حفظ الإعدادات",
+      settingsSaved: "تم حفظ الإعدادات!",
+      selectAgentToConfigure: "حدد عميلاً لتكوين إعداداته.",
+      // Telegram Integration
+      telegramNotificationSent: "تم إرسال إشعار تيليجرام!",
+      telegramChatId: "معرف دردشة تيليجرام",
+      telegramMessage: "رسالة تيليجرام",
+      // New OS UI elements
+      appLauncher: "مشغل التطبيقات",
+      fileManager: "مدير الملفات",
+      terminal: "الطرفية",
+      minimize: "تصغير",
+      maximize: "تكبير",
+      close: "إغلاق",
+      restore: "استعادة",
+      dragWindow: "سحب النافذة",
+      noFilesFound: "لم يتم العثور على ملفات أو مجلدات.",
+      commandPrompt: "أدخل الأمر...",
+      terminalOutput: "إخراج الطرفية",
+      start: "ابدأ",
+      settings: "الإعدادات",
+      sources: "المصادر",
+    },
+  },
+  agents: {
+    navigator: {
+      en: {
+        name: "Navigator",
+        description: "Find routes, places & traffic",
+        tasks: {
+          getDirections: "Get Directions",
+          findNearby: "Find Nearby",
+          geocode: "Geocode Address",
+        },
+        placeholders: {
+          origin: "Origin (e.g., Cairo)",
+          destination: "Destination (e.g., Alexandria)",
+          location: "Location (e.g., 30.0444,31.2357)",
+          placeType: "Type (e.g., restaurant)",
+          address: "Address (e.g., 123 Main St)",
+        },
+        mockResults: {
+          directions: "Route from Cairo to Alexandria calculated (180 km, 2h 30m).",
+          nearby: "Found 3 restaurants near Giza. The top-rated is 'Pyramid Taste'.",
+          geocode: "Address successfully geocoded to coordinates.",
+        },
+      },
+      ar: {
+        name: "الملاح",
+        description: "ابحث عن الطرق، الأماكن وحركة المرور",
+        tasks: {
+          getDirections: "الحصول على الاتجاهات",
+          findNearby: "البحث عن الأماكن القريبة",
+          geocode: "تحويل العنوان إلى إحداثيات",
+        },
+        placeholders: {
+          origin: "المصدر (مثال: القاهرة)",
+          destination: "الوجهة (مثال: الإسكندرية)",
+          location: "الموقع (مثال: 30.0444,31.2357)",
+          placeType: "النوع (مثال: مطعم)",
+          address: "العنوان (مثال: شارع رئيسي 123)",
+        },
+        mockResults: {
+          directions: "تم حساب الطريق من القاهرة إلى الإسكندرية (180 كم، 2 ساعة 30 دقيقة).",
+          nearby: "تم العثور على 3 مطاعم بالقرب من الجيزة. الأعلى تقييمًا هو 'ذوق الهرم'.",
+          geocode: "تم تحويل العنوان إلى إحداثيات بنجاح.",
+        },
+      },
+    },
+    vision: {
+      en: {
+        name: "Vision",
+        description: "Analyze images, OCR & landmark detection",
+        tasks: {
+          analyzeImage: "Analyze Image",
+          extractText: "Extract Text (OCR)",
+          identifyLandmark: "Identify Landmark",
+          detectObjects: "Detect Objects",
+        },
+        placeholders: {
+          imageUrl: "Image URL or Base64 (mock)",
+          prompt: "Prompt (e.g., Describe this image)",
+        },
+        mockResults: {
+          analyze: "This image shows a desert landscape with ancient pyramids under a clear sky.",
+          extract: "Extracted text: 'Welcome to Egypt'",
+          landmark: "Identified landmark: 'Great Pyramid of Giza'.",
+          objects: "Detected objects: 'camel', 'person', 'sand'.",
+        },
+      },
+      ar: {
+        name: "الرؤية",
+        description: "تحليل الصور، التعرف الضوئي على الحروف والكشف عن المعالم",
+        tasks: {
+          analyzeImage: "تحليل الصورة",
+          extractText: "استخراج النص (OCR)",
+          identifyLandmark: "التعرف على المعالم",
+          detectObjects: "الكشف عن الكائنات",
+        },
+        placeholders: {
+          imageUrl: "رابط الصورة أو Base64 (وهمي)",
+          prompt: "الموجه (مثال: صف هذه الصورة)",
+        },
+        mockResults: {
+          analyze: "تظهر هذه الصورة منظرًا صحراويًا به أهرامات قديمة تحت سماء صافية.",
+          extract: "النص المستخرج: 'مرحباً بكم في مصر'",
+          landmark: "المعلم المحدد: 'هرم خوفو الأكبر'.",
+          objects: "الكائنات المكتشفة: 'جمل', 'شخص', 'رمل'.",
+        },
+      },
+    },
+    research: {
+      en: {
+        name: "Research",
+        description: "Web search, travel info & fact verification",
+        tasks: {
+          webSearch: "Web Search",
+          findHotels: "Find Hotels",
+          getReviews: "Get Reviews",
+          comparePrices: "Compare Prices",
+        },
+        placeholders: {
+          query: "Search query (e.g., best travel apps)",
+          location: "Location (e.g., Cairo)",
+          filters: "Filters (e.g., price range)",
+          itemName: "Item name (e.g., iPhone 15)",
+          placeName: "Place Name (e.g., Pyramid Taste Restaurant)",
+        },
+        mockResults: {
+          webSearch: "Found 10 results for 'best travel apps'. Top result: 'Wanderlust App'.",
+          hotels: "Found 'The Nile Hilton' (4 stars, $90/night) and 'Cairo Boutique Hotel' (3 stars, $70/night).",
+          reviews: "Reviews for 'Pyramid Taste Restaurant': 'Excellent food, great view' (4.5/5).",
+          prices: "Price for iPhone 15: $999 (Amazon), $1049 (Best Buy).",
+        },
+      },
+      ar: {
+        name: "البحث",
+        description: "بحث الويب، معلومات السفر والتحقق من الحقائق",
+        tasks: {
+          webSearch: "بحث الويب",
+          findHotels: "البحث عن الفنادق",
+          getReviews: "الحصول على المراجعات",
+          comparePrices: "مقارنة الأسعار",
+        },
+        placeholders: {
+          query: "استعلام البحث (مثال: أفضل تطبيقات السفر)",
+          location: "الموقع (مثال: القاهرة)",
+          filters: "الفلاتر (مثال: نطاق السعر)",
+          itemName: "اسم العنصر (مثال: آيفون 15)",
+          placeName: "اسم المكان (مثال: مطعم ذوق الهرم)",
+        },
+        mockResults: {
+          webSearch: "تم العثور على 10 نتائج لـ 'أفضل تطبيقات السفر'. النتيجة الأولى: 'تطبيق Wanderlust'.",
+          hotels: "تم العثور على 'هيلتون النيل' (4 نجوم، 90 دولار/ليلة) و 'فندق القاهرة البوتيكي' (3 نجوم، 70 دولار/ليلة).",
+          reviews: "مراجعات مطعم 'ذوق الهرم': 'طعام ممتاز، منظر رائع' (4.5/5).",
+          prices: "سعر آيفون 15: 999 دولار (أمازون)، 1049 دولار (بست باي).",
+        },
+      },
+    },
+    translator: {
+      en: {
+        name: "Translator",
+        description: "Translate text, detect language & voice",
+        tasks: {
+          translateText: "Translate Text",
+          detectLanguage: "Detect Language",
+          voiceToText: "Voice to Text",
+          textToVoice: "Text to Voice",
+        },
+        placeholders: {
+          text: "Text to translate",
+          targetLang: "Target Language (e.g., ar)",
+          sourceLang: "Source Language (optional)",
+          audioInput: "Audio input (mock Base64)",
+        },
+        mockResults: {
+          translate: "Translated text: 'مرحباً بالعالم'",
+          detect: "Detected language: 'English' (confidence: 0.98)",
+          voiceToText: "Transcription: 'Hello, how are you today?'",
+          textToVoice: "Generated audio for 'Welcome'.",
+        },
+      },
+      ar: {
+        name: "المترجم",
+        description: "ترجمة النصوص، الكشف عن اللغة والصوت",
+        tasks: {
+          translateText: "ترجمة النص",
+          detectLanguage: "الكشف عن اللغة",
+          voiceToText: "تحويل الصوت إلى نص",
+          textToVoice: "تحويل النص إلى صوت",
+        },
+        placeholders: {
+          text: "النص للترجمة",
+          targetLang: "اللغة المستهدفة (مثال: en)",
+          sourceLang: "اللغة المصدر (اختياري)",
+          audioInput: "إدخال صوتي (وهمي Base64)",
+        },
+        mockResults: {
+          translate: "النص المترجم: 'Hello World'",
+          detect: "اللغة المكتشفة: 'العربية' (ثقة: 0.98)",
+          voiceToText: "النسخ: 'مرحباً، كيف حالك اليوم؟'",
+          textToVoice: "تم إنشاء صوت لـ 'أهلاً'.",
+        },
+      },
+    },
+    scheduler: {
+      en: {
+        name: "Scheduler",
+        description: "Create events, reminders & sync itineraries",
+        tasks: {
+          createEvent: "Create Event",
+          checkAvailability: "Check Availability",
+          setReminder: "Set Reminder",
+          syncItinerary: "Sync Itinerary",
+        },
+        placeholders: {
+          title: "Event Title",
+          location: "Location",
+          startTime: "Start Time (YYYY-MM-DDTHH:MM)",
+          endTime: "End Time (YYYY-MM-DDTHH:MM)",
+          timeRange: "Time Range (e.g., 2025-01-01T09:00/2025-01-01T17:00)",
+          eventId: "Event ID",
+          reminder: "Reminder (e.g., 30 minutes before)",
+          itineraryData: "Itinerary Data (JSON mock)",
+        },
+        mockResults: {
+          create: "Event 'Cairo Trip' created in your calendar.",
+          check: "You are available from 10:00 to 12:00 on Jan 23.",
+          reminder: "Reminder set for 'Flight to Luxor'.",
+          sync: "Itinerary 'Egypt Adventure' synced to calendar.",
+        },
+      },
+      ar: {
+        name: "الجدولة",
+        description: "إنشاء الأحداث، التذكيرات ومزامنة مسارات الرحلة",
+        tasks: {
+          createEvent: "إنشاء حدث",
+          checkAvailability: "التحقق من التوفر",
+          setReminder: "تعيين تذكير",
+          syncItinerary: "مزامنة مسار الرحلة",
+        },
+        placeholders: {
+          title: "عنوان الحدث",
+          location: "الموقع",
+          startTime: "وقت البدء (YYYY-MM-DDTHH:MM)",
+          endTime: "وقت الانتهاء (YYYY-MM-DDTHH:MM)",
+          timeRange: "النطاق الزمني (مثال: 2025-01-01T09:00/2025-01-01T17:00)",
+          eventId: "معرف الحدث",
+          reminder: "التذكير (مثال: 30 دقيقة قبل)",
+          itineraryData: "بيانات مسار الرحلة (JSON وهمي)",
+        },
+        mockResults: {
+          create: "تم إنشاء حدث 'رحلة القاهرة' في تقويمك.",
+          check: "أنت متاح من 10:00 إلى 12:00 في 23 يناير.",
+          reminder: "تم تعيين تذكير لـ 'رحلة إلى الأقصر'.",
+          sync: "تمت مزامنة مسار الرحلة 'مغامرة مصر' مع التقويم.",
+        },
+      },
+    },
+    storage: {
+      en: {
+        name: "Storage",
+        description: "Save documents, photos & itineraries",
+        tasks: {
+          saveDocument: "Save Document",
+          createItinerary: "Create Itinerary",
+          uploadFile: "Upload File",
+          shareFile: "Share File",
+        },
+        placeholders: {
+          content: "Document content",
+          filename: "Filename (e.g., MyNotes.txt)",
+          tripData: "Trip Data (JSON mock)",
+          fileInput: "File to upload (Base64 mock)",
+          fileId: "File ID",
+          email: "Recipient Email",
+        },
+        mockResults: {
+          save: "Document 'MyNotes.txt' saved to Drive.",
+          create: "Itinerary 'Egypt Adventure' created in Google Docs.",
+          upload: "File 'photo.jpg' uploaded to Drive.",
+          share: "File shared with user@example.com.",
+        },
+      },
+      ar: {
+        name: "التخزين",
+        description: "حفظ المستندات، الصور ومسارات الرحلة",
+        tasks: {
+          saveDocument: "حفظ مستند",
+          createItinerary: "إنشاء مسار رحلة",
+          uploadFile: "تحميل ملف",
+          shareFile: "مشاركة ملف",
+        },
+        placeholders: {
+          content: "محتوى المستند",
+          filename: "اسم الملف (مثال: MyNotes.txt)",
+          tripData: "بيانات الرحلة (JSON وهمي)",
+          fileInput: "ملف للتحميل (وهمي Base64)",
+          fileId: "معرف الملف",
+          email: "بريد المستلم الإلكتروني",
+        },
+        mockResults: {
+          save: "تم حفظ المستند 'MyNotes.txt' في Drive.",
+          create: "تم إنشاء مسار الرحلة 'مغامرة مصر' في مستندات Google.",
+          upload: "تم تحميل الملف 'photo.jpg' إلى Drive.",
+          share: "تمت مشاركة الملف مع user@example.com.",
+        },
+      },
+    },
+    media: {
+      en: {
+        name: "Media",
+        description: "Search videos, generate content & thumbnails",
+        tasks: {
+          searchVideos: "Search Videos",
+          getVideoDetails: "Get Video Details",
+          generateVideo: "Generate Video (Veo 3)",
+          createThumbnail: "Create Thumbnail (Imagen 3)",
+        },
+        placeholders: {
+          query: "Search query (e.g., Cairo travel vlogs)",
+          videoId: "Video ID (e.g., abcdefg)",
+          prompt: "Generation Prompt (e.g., futuristic city)",
+        },
+        mockResults: {
+          search: "Found 5 videos for 'Cairo travel vlogs'.",
+          details: "Video 'Egypt Adventure' by John Doe (10 min).",
+          generate: "Video 'futuristic city' generated and ready.",
+          thumbnail: "Thumbnail 'futuristic city' created.",
+        },
+      },
+      ar: {
+        name: "الوسائط",
+        description: "البحث عن مقاطع الفيديو، إنشاء المحتوى والصور المصغرة",
+        tasks: {
+          searchVideos: "البحث عن مقاطع الفيديو",
+          getVideoDetails: "الحصول على تفاصيل الفيديو",
+          generateVideo: "إنشاء فيديو (Veo 3)",
+          createThumbnail: "إنشاء صورة مصغرة (Imagen 3)",
+        },
+        placeholders: {
+          query: "استعلام البحث (مثال: مدونات سفر القاهرة)",
+          videoId: "معرف الفيديو (مثال: abcdefg)",
+          prompt: "موجه الإنشاء (مثال: مدينة مستقبلية)",
+        },
+        mockResults: {
+          search: "تم العثور على 5 مقاطع فيديو لـ 'مدونات سفر القاهرة'.",
+          details: "فيديو 'مغامرة مصر' بواسطة جون دو (10 دقائق).",
+          generate: "تم إنشاء فيديو 'مدينة مستقبلية' وهو جاهز.",
+          thumbnail: "تم إنشاء صورة مصغرة لـ 'مدينة مستقبلية'.",
+        },
+      },
+    },
+    communicator: {
+      en: {
+        name: "Communicator",
+        description: "Send emails, notifications & share info",
+        tasks: {
+          sendEmail: "Send Email",
+          emailItinerary: "Email Itinerary",
+          sendNotification: "Send Notification",
+          sendTelegramMessage: "Send Telegram Message", // New task
+        },
+        placeholders: {
+          to: "Recipient Email",
+          subject: "Subject",
+          body: "Email Body",
+          itineraryData: "Itinerary Data (JSON mock)",
+          message: "Notification Message",
+          telegramChatId: "Telegram Chat ID", // New placeholder
+          telegramMessage: "Message", // New placeholder
+        },
+        mockResults: {
+          email: "Email sent successfully to user@example.com.",
+          itinerary: "Itinerary emailed to family members.",
+          notification: "Notification 'Your flight is delayed' sent.",
+          telegram: "Telegram message sent successfully.", // New mock result
+        },
+      },
+      ar: {
+        name: "المتواصل",
+        description: "إرسال رسائل البريد الإلكتروني، الإشعارات ومشاركة المعلومات",
+        tasks: {
+          sendEmail: "إرسال بريد إلكتروني",
+          emailItinerary: "إرسال مسار الرحلة بالبريد الإلكتروني",
+          sendNotification: "إرسال إشعار",
+          sendTelegramMessage: "إرسال رسالة تيليجرام", // New task
+        },
+        placeholders: {
+          to: "بريد المستلم الإلكتروني",
+          subject: "الموضوع",
+          body: "محتوى البريد الإلكتروني",
+          itineraryData: "بيانات مسار الرحلة (JSON وهمي)",
+          message: "رسالة الإشعار",
+          telegramChatId: "معرف دردشة تيليجرام", // New placeholder
+          telegramMessage: "الرسالة", // New placeholder
+        },
+        mockResults: {
+          email: "تم إرسال البريد الإلكتروني بنجاح إلى user@example.com.",
+          itinerary: "تم إرسال مسار الرحلة بالبريد الإلكتروني لأفراد العائلة.",
+          notification: "تم إرسال إشعار 'رحلتك متأخرة'.",
+          telegram: "تم إرسال رسالة تيليجرام بنجاح.", // New mock result
+        },
+      },
+    },
+    coding: { // NEW CODING AGENT
+      en: {
+        name: "Coding Agent",
+        description: "Generates code with specialized sub-agents for UI, API, DevOps, QA, Documentation, and Code Review.",
+        tasks: {
+          generateUI: "Generate UI Code",
+          designAPI: "Design API & Backend",
+          createDeploymentConfig: "Create Deployment Config",
+          writeTests: "Write Test Cases",
+          generateDocumentation: "Generate Documentation",
+          reviewCode: "Review Code",
+        },
+        placeholders: {
+          projectDescription: "Describe the project or feature (e.g., 'A login form with email and password')",
+          uiComponent: "UI Component (e.g., 'button', 'card', 'navigation bar')",
+          uiFramework: "UI Framework (e.g., 'React', 'Vue', 'Angular')",
+          apiEndpoints: "API Endpoints (e.g., '/users', '/products/{id}')",
+          backendLanguage: "Backend Language (e.g., 'Node.js', 'Python', 'Go')",
+          serviceDescription: "Service Description (e.g., 'a user authentication service')",
+          platform: "Deployment Platform (e.g., 'AWS Lambda', 'Kubernetes', 'Firebase')",
+          ciCdTool: "CI/CD Tool (e.g., 'GitHub Actions', 'GitLab CI')",
+          featureToTest: "Feature to test (e.g., 'user registration', 'API endpoint response')",
+          testFramework: "Test Framework (e.g., 'Jest', 'Pytest')",
+          codeDescription: "Code description or function signature (e.g., 'User registration function')",
+          codeToReview: "Paste code to be reviewed here (e.g., JavaScript function, Python script)",
+        },
+        mockResults: { // These are now illustrative, real data comes from Gemini
+          generatedUI: "Generated React component for a login form:\n```jsx\n// React Login Form Code\n```",
+          designedAPI: "Designed RESTful API for user management:\n```json\n// API Schema\n```",
+          createdDeployment: "Created a basic Dockerfile and Kubernetes deployment YAML.",
+          writtenTests: "Generated Jest test suite for user registration.",
+          generatedDoc: "Generated documentation for the specified code/feature.",
+          reviewedCode: "Code review: Overall good quality, but consider adding input validation. Rating: 7/10",
+        },
+      },
+      ar: {
+        name: "عميل البرمجة",
+        description: "ينشئ الكود مع عملاء فرعيين متخصصين لواجهة المستخدم، الـ API، DevOps، ضمان الجودة، التوثيق، ومراجعة الكود.",
+        tasks: {
+          generateUI: "إنشاء كود واجهة المستخدم",
+          designAPI: "تصميم الـ API والواجهة الخلفية",
+          createDeploymentConfig: "إنشاء إعدادات النشر",
+          writeTests: "كتابة حالات الاختبار",
+          generateDocumentation: "إنشاء التوثيق",
+          reviewCode: "مراجعة الكود",
+        },
+        placeholders: {
+          projectDescription: "صف المشروع أو الميزة (مثال: 'نموذج تسجيل دخول بالبريد الإلكتروني وكلمة المرور')",
+          uiComponent: "مكون واجهة المستخدم (مثال: 'زر'، 'بطاقة'، 'شريط التنقل')",
+          uiFramework: "إطار عمل واجهة المستخدم (مثال: 'React', 'Vue', 'Angular')",
+          apiEndpoints: "نقاط نهاية الـ API (مثال: '/users', '/products/{id}')",
+          backendLanguage: "لغة الواجهة الخلفية (مثال: 'Node.js', 'Python', 'Go')",
+          serviceDescription: "وصف الخدمة (مثال: 'خدمة مصادقة المستخدم')",
+          platform: "منصة النشر (مثال: 'AWS Lambda', 'Kubernetes', 'Firebase')",
+          ciCdTool: "أداة CI/CD (مثال: 'GitHub Actions', 'GitLab CI')",
+          featureToTest: "الميزة المراد اختبارها (مثال: 'تسجيل المستخدم'، 'استجابة نقطة نهاية الـ API')",
+          testFramework: "إطار عمل الاختبار (مثال: 'Jest', 'Pytest')",
+          codeDescription: "وصف الكود أو توقيع الدالة (مثال: 'دالة تسجيل المستخدم')",
+          codeToReview: "الصق الكود للمراجعة هنا (مثال: دالة JavaScript، نص Python)",
+        },
+        mockResults: { // These are now illustrative, real data comes from Gemini
+          generatedUI: "تم إنشاء مكون React لنموذج تسجيل الدخول:\n```jsx\n// كود نموذج تسجيل الدخول React\n```",
+          designedAPI: "تم تصميم API RESTful لإدارة المستخدمين:\n```json\n// مخطط API\n```",
+          createdDeployment: "تم إنشاء Dockerfile أساسي و YAML نشر Kubernetes.",
+          writtenTests: "تم إنشاء مجموعة اختبار Jest لتسجيل المستخدمين.",
+          generatedDoc: "تم إنشاء التوثيق للكود/الميزة المحددة.",
+          reviewedCode: "مراجعة الكود: جودة جيدة بشكل عام، ولكن فكر في إضافة التحقق من المدخلات. التقييم: 7/10",
+        },
+      },
+    },
+    marketing: { // NEW MARKETING AGENT
+      en: {
+        name: "Marketing Agent",
+        description: "Develops strategies, creates content, and analyzes campaigns with specialized sub-agents.",
+        tasks: {
+          marketResearch: "Conduct Market Research",
+          seoSpecialist: "Optimize SEO Strategy",
+          contentStrategist: "Develop Content Strategy",
+          socialMediaManager: "Manage Social Media",
+          campaignManager: "Launch Marketing Campaign",
+          analyticsExpert: "Analyze Marketing Data",
+        },
+        placeholders: {
+          targetAudience: "Target audience (e.g., 'young adults interested in tech')",
+          productService: "Product or service (e.g., 'new AI assistant app')",
+          keywords: "Keywords (e.g., 'AI assistant', 'productivity app', 'smart help')",
+          competitors: "Competitors (e.g., 'Google Assistant', 'Siri')",
+          topic: "Content topic (e.g., 'benefits of AI in daily life')",
+          platform: "Social media platform (e.g., 'Instagram', 'LinkedIn')",
+          campaignGoal: "Campaign goal (e.g., 'increase brand awareness by 20%')",
+          budget: "Budget (e.g., '$5000')",
+          duration: "Duration (e.g., '3 weeks')",
+          dataToAnalyze: "Data to analyze (e.g., 'Q3 website traffic, conversion rates')",
+          metrics: "Key metrics (e.g., 'CTR', 'ROI', 'engagement')",
+          searchQuery: "Search query for analytics (e.g., 'user engagement trends')",
+        },
+        mockResults: { // Updated mockResults to reflect potential grounding chunks
+          marketResearch: {
+            text: "Market research complete: Identified key demographics and competitive landscape.",
+            groundingChunks: [{ web: { uri: "https://example.com/market-trends", title: "Market Trends 2024" } }]
+          },
+          seoSpecialist: {
+            text: "SEO strategy optimized: Recommended keywords and content improvements for ranking.",
+            groundingChunks: [{ web: { uri: "https://developers.google.com/search/docs/fundamentals/seo-starter-guide", title: "Google SEO Guide" } }]
+          },
+          contentStrategist: {
+            text: "Content strategy developed: Proposed blog posts, videos, and social media themes.",
+            groundingChunks: [{ web: { uri: "https://blog.hubspot.com/marketing/content-strategy", title: "HubSpot Content Strategy" } }]
+          },
+          socialMediaManager: {
+            text: "Social media plan drafted: Scheduled posts and engagement tactics for Instagram.",
+            groundingChunks: [{ web: { uri: "https://business.instagram.com/", title: "Instagram for Business" } }]
+          },
+          campaignManager: {
+            text: "Marketing campaign launched: Initial results show strong engagement.",
+            groundingChunks: [{ web: { uri: "https://ads.google.com/", title: "Google Ads" } }]
+          },
+          analyticsExpert: {
+            text: "Marketing data analyzed: Identified high-performing channels and areas for improvement.",
+            groundingChunks: [{ web: { uri: "https://analytics.google.com/analytics/web/", title: "Google Analytics" } }]
+          },
+        },
+      },
+      ar: {
+        name: "عميل التسويق",
+        description: "يطور الاستراتيجيات، ينشئ المحتوى، ويحلل الحملات مع عملاء فرعيين متخصصين.",
+        tasks: {
+          marketResearch: "إجراء بحث السوق",
+          seoSpecialist: "تحسين استراتيجية تحسين محركات البحث (SEO)",
+          contentStrategist: "تطوير استراتيجية المحتوى",
+          socialMediaManager: "إدارة وسائل التواصل الاجتماعي",
+          campaignManager: "إطلاق حملة تسويقية",
+          analyticsExpert: "تحليل بيانات التسويق",
+        },
+        placeholders: {
+          targetAudience: "الجمهور المستهدف (مثال: 'الشباب المهتمون بالتكنولوجيا')",
+          productService: "المنتج أو الخدمة (مثال: 'تطبيق مساعد الذكاء الاصطناعي الجديد')",
+          keywords: "الكلمات المفتاحية (مثال: 'مساعد الذكاء الاصطناعي', 'تطبيق إنتاجي', 'مساعدة ذكية')",
+          competitors: "المنافسون (مثال: 'مساعد جوجل', 'سيري')",
+          topic: "موضوع المحتوى (مثال: 'فوائد الذكاء الاصطناعي في الحياة اليومية')",
+          platform: "منصة التواصل الاجتماعي (مثال: 'إنستغرام', 'لينكد إن')",
+          campaignGoal: "هدف الحملة (مثال: 'زيادة الوعي بالعلامة التجارية بنسبة 20%')",
+          budget: "الميزانية (مثال: '5000 دولار')",
+          duration: "المدة (مثال: '3 أسابيع')",
+          dataToAnalyze: "البيانات المراد تحليلها (مثال: 'حركة مرور الموقع للربع الثالث، معدلات التحويل')",
+          metrics: "المقاييس الرئيسية (مثال: 'نسبة النقر إلى الظهور', 'العائد على الاستثمار', 'التفاعل')",
+          searchQuery: "استعلام البحث للتحليلات (مثال: 'اتجاهات تفاعل المستخدم')",
+        },
+        mockResults: { // Updated mockResults to reflect potential grounding chunks
+          marketResearch: {
+            text: "اكتمل بحث السوق: تم تحديد التركيبة السكانية الرئيسية والمشهد التنافسي.",
+            groundingChunks: [{ web: { uri: "https://example.com/market-trends", title: "اتجاهات السوق 2024" } }]
+          },
+          seoSpecialist: {
+            text: "تم تحسين استراتيجية تحسين محركات البحث: تم التوصية بالكلمات المفتاحية وتحسينات المحتوى للترتيب.",
+            groundingChunks: [{ web: { uri: "https://developers.google.com/search/docs/fundamentals/seo-starter-guide", title: "دليل جوجل لتحسين محركات البحث" } }]
+          },
+          contentStrategist: {
+            text: "تم تطوير استراتيجية المحتوى: تم اقتراح منشورات المدونة ومقاطع الفيديو وموضوعات وسائل التواصل الاجتماعي.",
+            groundingChunks: [{ web: { uri: "https://blog.hubspot.com/marketing/content-strategy", title: "استراتيجية المحتوى من HubSpot" } }]
+          },
+          socialMediaManager: {
+            text: "تمت صياغة خطة وسائل التواصل الاجتماعي: تم جدولة المنشورات وتكتيكات التفاعل لـ Instagram.",
+            groundingChunks: [{ web: { uri: "https://business.instagram.com/", title: "إنستغرام للأعمال" } }]
+          },
+          campaignManager: {
+            text: "تم إطلاق الحملة التسويقية: تظهر النتائج الأولية تفاعلاً قوياً.",
+            groundingChunks: [{ web: { uri: "https://ads.google.com/", title: "إعلانات جوجل" } }]
+          },
+          analyticsExpert: {
+            text: "تم تحليل بيانات التسويق: تم تحديد القنوات عالية الأداء ومجالات التحسين.",
+            groundingChunks: [{ web: { uri: "https://analytics.google.com/analytics/web/", title: "تحليلات جوجل" } }]
+          },
+        },
+      },
+    },
+  },
+};

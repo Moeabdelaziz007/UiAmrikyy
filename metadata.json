@@ -1,0 +1,8 @@
+{
+  "name": "Amrikyy AI OS - Mini Agent Services",
+  "description": "Amrikyy AI OS: A revolutionary platform leveraging specialized AI Mini Agents for automated task execution across Google Services, orchestrated by Gemini Pro.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ]
+}

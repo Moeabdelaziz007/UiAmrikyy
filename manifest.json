@@ -1,0 +1,21 @@
+{
+  "name": "Amrikyy AI OS - Mini Agent Services",
+  "short_name": "Amrikyy AI Agents",
+  "description": "Amrikyy AI OS: A revolutionary platform leveraging specialized AI Mini Agents for automated task execution across Google Services, orchestrated by Gemini Pro.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
