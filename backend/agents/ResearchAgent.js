@@ -1,69 +1,102 @@
-const axios = require('axios');
-const logger = require('../../utils/logger');
-
+const { getAi } = require('../services/geminiService');
+const logger = require('../utils/logger');
 
 class ResearchAgent {
   constructor() {
     this.name = "Research Agent";
-    this.description = "Handles web search and information retrieval using Google Custom Search API.";
-    this.searchApiKey = process.env.GOOGLE_SEARCH_API_KEY; 
-    this.searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
+    this.description = "Handles web and map search and information retrieval using Gemini with grounding.";
+    this.modelName = 'gemini-2.5-flash';
 
-    if (!this.searchApiKey || !this.searchEngineId) {
-      logger.warn(`[${this.name}] Google Search API Key or Engine ID is not configured. Real API calls will fail.`);
+    if (!process.env.API_KEY) {
+      logger.warn(`[${this.name}] Gemini API Key is not configured. Real API calls will fail.`);
     }
   }
 
   _checkConfig() {
-    if (!this.searchApiKey || !this.searchEngineId) {
-      throw new Error('Google Custom Search API Key or Engine ID is not configured.');
+    if (!process.env.API_KEY) {
+      throw new Error('Gemini API Key is not configured.');
     }
   }
 
   async executeTask(task) {
     logger.info(`[${this.name}] Executing task: ${task.type}`);
-    this._checkConfig(); // Check for API keys before executing any task
+    this._checkConfig();
 
     switch (task.type) {
       case 'webSearch':
+        if (!task.query) throw new Error('Query is required for webSearch.');
         return await this.webSearch(task.query);
-      case 'findHotels':
-        const hotelQuery = `hotels in ${task.location} ${task.filters || ''}`;
-        return await this.webSearch(hotelQuery);
-      case 'getReviews':
-        const reviewQuery = `reviews for ${task.placeName}`;
-        return await this.webSearch(reviewQuery);
-      case 'comparePrices':
-         const priceQuery = `price comparison for ${task.itemName}`;
-        return await this.webSearch(priceQuery);
+      
+      case 'locationQuery':
+        if (!task.query) throw new Error('Query is required for locationQuery.');
+        return await this.locationQuery(task.query, task.userLocation);
+
       default:
-        throw new Error(`Unknown task type for Research Agent: ${task.type}`);
+        // The old tasks like findHotels, getReviews are now handled by the more powerful webSearch.
+        // We can route them to webSearch for backward compatibility if needed, or just throw an error.
+        throw new Error(`Unknown or deprecated task type for Research Agent: ${task.type}`);
     }
   }
 
-  async webSearch(query, options = {}) {
-    const { num = 10 } = options;
+  async webSearch(query) {
     try {
-      const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
-        params: {
-          key: this.searchApiKey,
-          cx: this.searchEngineId,
-          q: query,
-          num,
-        }
+      const ai = getAi();
+      const response = await ai.models.generateContent({
+        model: this.modelName,
+        contents: query,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
       });
-      const results = response.data.items?.map(item => ({
-        title: item.title,
-        link: item.link,
-        snippet: item.snippet,
-      })) || [];
-      return { results };
+
+      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      return {
+        text: response.text,
+        groundingChunks: groundingChunks,
+      };
 
     } catch (error) {
-      logger.error(`[${this.name}] Error during web search for query "${query}":`, error.response?.data?.error || error.message);
-      throw new Error(`Failed to perform web search: ${error.response?.data?.error?.message || error.message}`);
+      logger.error(`[${this.name}] Error during web search for query "${query}":`, error.message);
+      throw new Error(`Failed to perform web search with Gemini: ${error.message}`);
     }
   }
+  
+  async locationQuery(query, userLocation) {
+    try {
+      const ai = getAi();
+      const config = {
+        tools: [{ googleMaps: {} }],
+      };
+      
+      if (userLocation && userLocation.latitude && userLocation.longitude) {
+        config.toolConfig = {
+          retrievalConfig: {
+            latLng: {
+              latitude: userLocation.latitude,
+              longitude: userLocation.longitude
+            }
+          }
+        };
+      }
+      
+      const response = await ai.models.generateContent({
+        model: this.modelName,
+        contents: query,
+        config: config,
+      });
+
+      const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      return {
+        text: response.text,
+        groundingChunks: groundingChunks,
+      };
+
+    } catch (error) {
+      logger.error(`[${this.name}] Error during location query for query "${query}":`, error.message);
+      throw new Error(`Failed to perform location query with Gemini: ${error.message}`);
+    }
+  }
+
 }
 
 module.exports = ResearchAgent;

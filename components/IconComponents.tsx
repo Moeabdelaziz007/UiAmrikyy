@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  MapPin, Eye, Search, Languages, Calendar, HardDrive, Video, Mail, Cpu, X, Globe, Cog, Code, Megaphone, BarChartBig, LineChart, PencilLine, Share2, Rocket, PieChart, MonitorCheck, FolderOpen, Terminal, History
+  MapPin, Eye, Search, Languages, Calendar, HardDrive, Video, Mail, Cpu, X, Globe, Cog, Code, Megaphone, BarChartBig, LineChart, PencilLine, Share2, Rocket, PieChart, MonitorCheck, FolderOpen, Terminal, History, MessageSquare, PlaneTakeoff
 } from 'lucide-react'; // Corrected CpuChip to Cpu, added Cog, Code, Megaphone, and sub-agent icons
 
 // FIX: Add color prop to all icon components to allow dynamic coloring.
@@ -11,6 +11,10 @@ interface IconProps {
 
 export const MapPinIcon: React.FC<IconProps> = ({ className, color }) => (
     <MapPin className={className} color={color} />
+);
+
+export const PlaneTakeoffIcon: React.FC<IconProps> = ({ className, color }) => (
+    <PlaneTakeoff className={className} color={color} />
 );
 
 export const EyeIcon: React.FC<IconProps> = ({ className, color }) => (
@@ -105,4 +109,8 @@ export const TerminalIcon: React.FC<IconProps> = ({ className, color }) => (
 
 export const HistoryIcon: React.FC<IconProps> = ({ className, color }) => (
   <History className={className} color={color} />
+);
+
+export const MessageSquareIcon: React.FC<IconProps> = ({ className, color }) => (
+  <MessageSquare className={className} color={color} />
 );

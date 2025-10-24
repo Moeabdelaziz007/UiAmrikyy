@@ -1,10 +1,20 @@
 import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
-import { SearchIcon, Hotel, Star, DollarSign } from 'lucide-react'; // Using Lucide-React icons
+import { SearchIcon, MapPin } from 'lucide-react';
 import { LanguageContext } from '../../App';
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
 import { TaskHistoryEntry } from '../../types';
+
+interface GroundingChunk {
+  web?: { uri: string; title: string };
+  maps?: { uri: string; title: string };
+}
+
+interface ResearchResult {
+  text: string;
+  groundingChunks: GroundingChunk[];
+}
 
 interface ResearchAgentUIProps {
   onTaskComplete: (entry: TaskHistoryEntry) => void;
@@ -17,76 +27,96 @@ const ResearchAgentUI: React.FC<ResearchAgentUIProps> = ({ onTaskComplete }) => 
   const globalText = translations.global[lang];
   const currentThemeColors = theme.colors;
 
-  const [query, setQuery] = useState('');
-  const [location, setLocation] = useState('');
-  const [filters, setFilters] = useState('');
-  const [itemName, setItemName] = useState('');
-  const [placeName, setPlaceName] = useState('');
-  const [result, setResult] = useState('');
+  const [webQuery, setWebQuery] = useState('');
+  const [locationQuery, setLocationQuery] = useState('');
+  const [result, setResult] = useState<ResearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // FIX: Update mockOutput parameter type to allow Record<string, any>
-  const mockExecuteTask = async (
-    taskType: string,
-    taskInput: string | Record<string, any>,
-    mockOutput: string | Record<string, any>,
-    isError: boolean = false,
-    errorMessage: string = ''
+  const executeTask = async (
+    taskType: 'webSearch' | 'locationQuery',
+    taskInput: Record<string, any>,
   ) => {
     setIsLoading(true);
-    setResult('');
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
-    setIsLoading(false);
-    setResult(isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)));
+    setResult(null);
+    setError('');
 
-    onTaskComplete({
-      id: Date.now().toString(),
-      agentId: 'research',
-      agentName: currentText.name,
-      taskType: taskType,
-      taskInput: taskInput,
-      taskOutput: isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)),
-      timestamp: new Date().toISOString(),
-      status: isError ? 'error' : 'success',
-      errorMessage: isError ? errorMessage : undefined,
-    });
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/research`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: taskType, ...taskInput }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+
+      const data = await response.json();
+      setResult(data);
+
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'research',
+        agentName: currentText.name,
+        taskType: currentText.tasks[taskType],
+        taskInput,
+        taskOutput: data,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+      });
+
+    } catch (err: any) {
+      setError(err.message);
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'research',
+        agentName: currentText.name,
+        taskType: currentText.tasks[taskType],
+        taskInput,
+        taskOutput: { error: err.message },
+        timestamp: new Date().toISOString(),
+        status: 'error',
+        errorMessage: err.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleWebSearch = () => {
-    if (!query) return;
-    mockExecuteTask(
-      currentText.tasks.webSearch,
-      { query },
-      currentText.mockResults.webSearch
-    );
+    if (!webQuery) return;
+    executeTask('webSearch', { query: webQuery });
   };
 
-  const handleFindHotels = () => {
-    if (!location) return;
-    mockExecuteTask(
-      currentText.tasks.findHotels,
-      { location, filters },
-      currentText.mockResults.hotels
-    );
+  const handleLocationQuery = (userLocation: GeolocationCoordinates | null) => {
+    if (!locationQuery) return;
+    const taskInput: { query: string; userLocation?: { latitude: number; longitude: number } } = { query: locationQuery };
+    if (userLocation) {
+      taskInput.userLocation = {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      };
+    }
+    executeTask('locationQuery', taskInput);
+  };
+  
+  const handleUseMyLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          handleLocationQuery(position.coords);
+        },
+        (error) => {
+          setError(`Geolocation error: ${error.message}`);
+        }
+      );
+    } else {
+      setError('Geolocation is not supported by this browser.');
+    }
   };
 
-  const handleGetReviews = () => {
-    if (!placeName) return;
-    mockExecuteTask(
-      currentText.tasks.getReviews,
-      { placeName },
-      currentText.mockResults.reviews
-    );
-  };
-
-  const handleComparePrices = () => {
-    if (!itemName) return;
-    mockExecuteTask(
-      currentText.tasks.comparePrices,
-      { itemName },
-      currentText.mockResults.prices
-    );
-  };
 
   const inputClass = `w-full p-2 rounded-md border text-text bg-background focus:ring-2 focus:ring-primary focus:border-transparent`;
   const buttonClass = `w-full py-2 px-4 rounded-md text-white font-semibold bg-primary hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed`;
@@ -96,9 +126,8 @@ const ResearchAgentUI: React.FC<ResearchAgentUIProps> = ({ onTaskComplete }) => 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={`p-6 space-y-6 ${currentThemeColors.background}`}
-      style={{ fontFamily: lang === 'ar' ? 'Cairo, sans-serif' : 'Inter, sans-serif' }}
     >
-      <h3 className={`text-2xl font-bold flex items-center gap-2 text-text`} style={{color: currentThemeColors.primary}}>
+      <h3 className={`text-2xl font-bold flex items-center gap-2 text-text`} style={{ color: currentThemeColors.primary }}>
         <SearchIcon className="w-6 h-6" /> {currentText.name}
       </h3>
       <p className={`text-text-secondary`}>{currentText.description}</p>
@@ -106,74 +135,42 @@ const ResearchAgentUI: React.FC<ResearchAgentUIProps> = ({ onTaskComplete }) => 
       {/* Web Search */}
       <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
         <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.webSearch}</h4>
-        <input
-          type="text"
+        <textarea
           placeholder={currentText.placeholders.query}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={webQuery}
+          onChange={(e) => setWebQuery(e.target.value)}
           className={`${inputClass} mb-3`}
           style={{ borderColor: currentThemeColors.border }}
+          rows={2}
         />
-        <button onClick={handleWebSearch} disabled={isLoading || !query} className={buttonClass}>
+        <button onClick={handleWebSearch} disabled={isLoading || !webQuery} className={buttonClass}>
           {isLoading ? globalText.loading : currentText.tasks.webSearch}
         </button>
       </div>
 
-      {/* Find Hotels */}
+      {/* Location Query */}
       <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.findHotels}</h4>
-        <input
-          type="text"
-          placeholder={currentText.placeholders.location}
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
+        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.locationQuery}</h4>
+        <textarea
+          placeholder={currentText.placeholders.locationQuery}
+          value={locationQuery}
+          onChange={(e) => setLocationQuery(e.target.value)}
           className={`${inputClass} mb-3`}
           style={{ borderColor: currentThemeColors.border }}
+          rows={2}
         />
-        <input
-          type="text"
-          placeholder={currentText.placeholders.filters}
-          value={filters}
-          onChange={(e) => setFilters(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-        />
-        <button onClick={handleFindHotels} disabled={isLoading || !location} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.findHotels}
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => handleLocationQuery(null)} disabled={isLoading || !locationQuery} className={buttonClass}>
+            {isLoading ? globalText.loading : globalText.search || 'Search'}
+          </button>
+          <button onClick={handleUseMyLocation} disabled={isLoading || !locationQuery} className="w-full py-2 px-4 rounded-md text-white font-semibold bg-secondary hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2" style={{backgroundColor: theme.colors.secondary}}>
+            <MapPin size={16} /> {lang === 'ar' ? 'استخدام موقعي' : 'Use My Location'}
+          </button>
+        </div>
       </div>
 
-      {/* Get Reviews */}
-      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.getReviews}</h4>
-        <input
-          type="text"
-          placeholder={currentText.placeholders.itemName}
-          value={placeName}
-          onChange={(e) => setPlaceName(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-        />
-        <button onClick={handleGetReviews} disabled={isLoading || !placeName} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.getReviews}
-        </button>
-      </div>
-      
-      {/* Compare Prices */}
-      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text`}>{currentText.tasks.comparePrices}</h4>
-        <input
-          type="text"
-          placeholder={currentText.placeholders.itemName}
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-        />
-        <button onClick={handleComparePrices} disabled={isLoading || !itemName} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.comparePrices}
-        </button>
-      </div>
+      {isLoading && <p className="text-center text-text-secondary">{globalText.loading}</p>}
+      {error && <p className="text-center text-error">{error}</p>}
 
       {result && (
         <motion.div
@@ -183,7 +180,25 @@ const ResearchAgentUI: React.FC<ResearchAgentUIProps> = ({ onTaskComplete }) => 
           style={{ background: currentThemeColors.surface, borderColor: currentThemeColors.border, color: currentThemeColors.text }}
         >
           <h4 className="font-semibold mb-2">{globalText.output}:</h4>
-          <p>{result}</p>
+          <p className="whitespace-pre-wrap">{result.text}</p>
+          {result.groundingChunks && result.groundingChunks.length > 0 && (
+            <div className="mt-3 pt-3 border-t" style={{ borderColor: theme.colors.border }}>
+              <h5 className="text-sm font-semibold text-text-secondary">{globalText.sources}</h5>
+              <ul className="list-disc list-inside text-sm mt-1">
+                {result.groundingChunks.map((chunk, index) => {
+                    const source = chunk.web || chunk.maps;
+                    if (!source) return null;
+                    return (
+                      <li key={index}>
+                        <a href={source.uri} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" style={{ color: theme.colors.primary }}>
+                          {source.title || source.uri}
+                        </a>
+                      </li>
+                    );
+                })}
+              </ul>
+            </div>
+          )}
         </motion.div>
       )}
     </motion.div>

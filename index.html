@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amrikyy AI OS - Mini Agent Services</title>
+    <!-- PWA Manifest & Theme Color -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#3b82f6" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: 'var(--color-primary)',
+              secondary: 'var(--color-secondary)',
+              accent: 'var(--color-accent)',
+              success: '#4ade80',
+              warning: '#fbbf24',
+              error: '#ef4444',
+              background: 'var(--color-background)',
+              surface: 'var(--color-surface)',
+              text: 'var(--color-text)',
+              'text-secondary': 'var(--color-textSecondary)',
+              border: 'var(--color-border)',
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              arabic: ['Cairo', 'sans-serif'],
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(20px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              },
+              'animated-gradient': {
+                '0%': { backgroundPosition: '0% 50%' },
+                '50%': { backgroundPosition: '100% 50%' },
+                '100%': { backgroundPosition: '0% 50%' },
+              },
+              'aurora-pulse': {
+                '0%, 100%': { opacity: '0.4' },
+                '50%': { opacity: '0.8' },
+              },
+              'aurora-move': {
+                '0%': { transform: 'translate(0, 0)' },
+                '25%': { transform: 'translate(20%, 10%)' },
+                '50%': { transform: 'translate(0, 20%)' },
+                '75%': { transform: 'translate(-20%, 10%)' },
+                '100%': { transform: 'translate(0, 0)' },
+              },
+              'hologram-scan': {
+                '0%': { transform: 'translateY(-100%)', opacity: '0.5' },
+                '50%': { transform: 'translateY(100%)', opacity: '1' },
+                '100%': { transform: 'translateY(100%)', opacity: '0' },
+              },
+              'grid-pan': {
+                '0%': { backgroundPosition: '0% 0%' },
+                '100%': { backgroundPosition: '30px 30px' },
+              }
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'slide-up': 'slideUp 0.5s ease-out forwards',
+              'gradient': 'animated-gradient 15s ease infinite',
+              'aurora-pulse-1': 'aurora-pulse 3s ease-in-out infinite',
+              'aurora-pulse-2': 'aurora-pulse 4s ease-in-out infinite delay-1s',
+              'aurora-move-1': 'aurora-move 20s ease-in-out infinite',
+              'aurora-move-2': 'aurora-move 25s ease-in-out infinite delay-2s',
+              'hologram': 'hologram-scan 3s ease-in-out infinite',
+              'grid-pan': 'grid-pan 3s linear infinite',
+            },
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^11.3.2",
+    "@/": "/src/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.546.0",
+    "@testing-library/react": "https://aistudiocdn.com/@testing-library/react@^16.3.0",
+    "@testing-library/jest-dom": "https://aistudiocdn.com/@testing-library/jest-dom@^6.9.1",
+    "@jest/globals": "https://aistudiocdn.com/@jest/globals@^30.2.0",
+    "@playwright/test": "https://aistudiocdn.com/@playwright/test@^1.56.1",
+    "dotenv/": "https://aistudiocdn.com/dotenv@^17.2.3/",
+    "react-rnd": "https://aistudiocdn.com/react-rnd@^10.5.2",
+    "zustand/": "https://aistudiocdn.com/zustand@^5.0.8/",
+    "zustand": "https://aistudiocdn.com/zustand@^5.0.8"
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<script>
+  // Utility function to convert a file to a base64 string
+  window.fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // result is "data:mime/type;base64,the-base64-string"
+        // we want to remove the prefix
+        const result = reader.result;
+        if (typeof result === 'string') {
+          resolve(result.split(',')[1]);
+        } else {
+          reject(new Error('Failed to read file as base64 string.'));
+        }
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-surface font-sans">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

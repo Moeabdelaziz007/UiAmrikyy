@@ -43,7 +43,7 @@ const Desktop: React.FC<DesktopProps> = () => { // Removed lang from props
       </div>
 
       {/* Futuristic Grid Overlay */}
-      <div className="absolute inset-0 z-0 opacity-10 animate-grid-pan" style={{
+      <div className="absolute inset-0 z-0 opacity-20 animate-grid-pan" style={{
         backgroundImage: `radial-gradient(${currentThemeColors.textSecondary} 1px, transparent 1px)`,
         backgroundSize: '30px 30px',
         maskImage: 'radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%)',

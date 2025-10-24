@@ -13,6 +13,8 @@ const MediaAgent = require('../agents/MediaAgent');
 const CommunicatorAgent = require('../agents/CommunicatorAgent');
 const CodingAgent = require('../agents/CodingAgent');
 const MarketingAgent = require('../agents/MarketingAgent'); // Import MarketingAgent
+const ChatAgent = require('../agents/ChatAgent'); // Import ChatAgent
+const PromptEngineeringAgent = require('../agents/PromptEngineeringAgent'); // Import PromptEngineeringAgent
 const logger = require('../utils/logger');
 
 
@@ -27,6 +29,8 @@ const mediaAgent = new MediaAgent();
 const communicatorAgent = new CommunicatorAgent();
 const codingAgent = new CodingAgent();
 const marketingAgent = new MarketingAgent(); // Instantiate MarketingAgent
+const chatAgent = new ChatAgent();
+const promptEngineeringAgent = new PromptEngineeringAgent();
 
 
 // --- Orchestrator Route ---
@@ -47,6 +51,18 @@ router.post('/orchestrator', async (req, res) => {
 });
 
 // --- Individual Agent Routes ---
+
+// Chat Agent
+router.post('/agents/chat', async (req, res) => {
+  try {
+    const result = await chatAgent.executeTask(req.body);
+    res.json(result);
+  } catch (error) {
+    logger.error('Chat Agent error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // Navigator Agent
 router.post('/agents/navigator', async (req, res) => {
@@ -74,12 +90,11 @@ router.post('/agents/vision', async (req, res) => {
 
 // Research Agent
 router.post('/agents/research', async (req, res) => {
-  const { type, query, location, filters, itemName, placeName } = req.body;
   try {
-    const result = await researchAgent.executeTask({ type, query, location, filters, itemName, placeName });
+    const result = await researchAgent.executeTask(req.body);
     res.json(result);
   } catch (error) {
-    console.error('Research Agent error:', error);
+    logger.error('Research Agent error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -122,13 +137,28 @@ router.post('/agents/storage', async (req, res) => {
 
 // Media Agent
 router.post('/agents/media', async (req, res) => {
-  const { type, query, videoId, prompt } = req.body;
   try {
-    // The MediaAgent distinguishes between generate/thumbnail prompts, so pass them all.
-    const result = await mediaAgent.executeTask({ type, query, videoId, generatePrompt: prompt, thumbnailPrompt: prompt });
+    const result = await mediaAgent.executeTask(req.body);
     res.json(result);
   } catch (error) {
-    console.error('Media Agent error:', error);
+    logger.error('Media Agent error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New route for checking video generation status
+router.post('/agents/media/video-status', async (req, res) => {
+  const { operation } = req.body;
+  try {
+    const result = await mediaAgent.executeTask({ type: 'getVideoStatus', operation });
+    // Add API key to the URI if it's done
+    if (result.done && result.response?.generatedVideos?.[0]?.video?.uri) {
+      const uriWithKey = `${result.response.generatedVideos[0].video.uri}&key=${process.env.API_KEY}`;
+      result.response.generatedVideos[0].video.uri = uriWithKey;
+    }
+    res.json(result);
+  } catch (error) {
+    logger.error('Media Agent video status error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -171,7 +201,18 @@ router.post('/agents/marketing', async (req, res) => {
   }
 });
 
-// --- New Test Route for AIX ---
+// Prompt Engineering Agent
+router.post('/agents/prompt-engineer', async (req, res) => {
+  try {
+    const result = await promptEngineeringAgent.executeTask({ type: 'refinePrompt', ...req.body });
+    res.json(result);
+  } catch (error) {
+    logger.error('Prompt Engineering Agent error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- AIX Test Routes ---
 router.post('/test-aix', async (req, res) => {
   logger.info('Received request to test AIX execution');
   // For this test, we hardcode the filename.
@@ -181,6 +222,26 @@ router.post('/test-aix', async (req, res) => {
     res.json({ message: 'AIX task executed successfully', output: result.output });
   } else {
     res.status(500).json({ message: 'AIX task failed', error: result.error });
+  }
+});
+
+router.post('/test-aix-summary', async (req, res) => {
+  logger.info('Received request to test AIX document summarization');
+  const result = await runResearchAixTask('document_summarization.aix');
+  if (result.success) {
+    res.json({ message: 'AIX summarization task executed successfully', output: result.output });
+  } else {
+    res.status(500).json({ message: 'AIX summarization task failed', error: result.error });
+  }
+});
+
+router.post('/test-aix-slogan', async (req, res) => {
+  logger.info('Received request to test AIX slogan generation');
+  const result = await runResearchAixTask('slogan_generation.aix');
+  if (result.success) {
+    res.json({ message: 'AIX slogan generation task executed successfully', output: result.output });
+  } else {
+    res.status(500).json({ message: 'AIX slogan generation task failed', error: result.error });
   }
 });
 

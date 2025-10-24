@@ -4,50 +4,28 @@ import useTaskHistoryStore from '../../stores/taskHistoryStore';
 import Dashboard from '../Dashboard';
 import Window from './Window';
 import Taskbar from './Taskbar';
-import StartMenu from './StartMenu';
-import VoiceAssistant from './VoiceAssistant'; // Import the new VoiceAssistant
+import AppLauncher from '../AppLauncher'; // Import the new AppLauncher
 import { AnimatePresence } from 'framer-motion';
 import { allApps } from '../../lib/apps';
-import DesktopIcon from './DesktopIcon';
 import { LanguageContext } from '../../App';
 
 
 const DesktopManager: React.FC = () => {
   const windows = useWindowStore((state) => Object.values(state.windows));
-  const { openWindow, closeWindow, minimizeWindow, toggleMaximize, focusWindow, updateWindowPosition, updateWindowSize, setTaskHistoryCallback } = useWindowStore();
+  const { closeWindow, minimizeWindow, toggleMaximize, focusWindow, updateWindowPosition, updateWindowSize, setTaskHistoryCallback } = useWindowStore();
   const addTaskToHistory = useTaskHistoryStore((state) => state.addTask);
-  const [isStartMenuVisible, setStartMenuVisible] = useState(false);
-  const { lang } = useContext(LanguageContext);
+  const [isAppLauncherVisible, setAppLauncherVisible] = useState(false);
 
   // Connect the onTaskComplete callback from the window store to the task history store
   useEffect(() => {
     setTaskHistoryCallback(addTaskToHistory);
   }, [setTaskHistoryCallback, addTaskToHistory]);
 
-  const handleLaunchApp = (appId: string) => {
-    const app = allApps.find(a => a.id === appId);
-    if (app) {
-      openWindow(app);
-    }
-  };
-
-
   return (
     <div className="h-full w-full relative overflow-hidden">
       <Dashboard />
 
-      {/* Desktop Icons */}
-      <div className="absolute top-5 left-5 grid grid-cols-1 gap-4">
-        {allApps.map(app => (
-          <DesktopIcon 
-            key={app.id} 
-            app={app} 
-            onLaunch={handleLaunchApp} 
-            lang={lang}
-          />
-        ))}
-      </div>
-
+      {/* Desktop Icons are removed for a cleaner, intent-driven UI */}
 
       {/* Render all non-minimized windows */}
       <main className="absolute inset-0">
@@ -67,14 +45,13 @@ const DesktopManager: React.FC = () => {
         )}
       </main>
 
-      <AnimatePresence>
-        {isStartMenuVisible && <StartMenu onClose={() => setStartMenuVisible(false)} />}
-      </AnimatePresence>
+      <AppLauncher 
+        isVisible={isAppLauncherVisible} 
+        onClose={() => setAppLauncherVisible(false)} 
+      />
 
-      <Taskbar onToggleStartMenu={() => setStartMenuVisible((prev) => !prev)} />
+      <Taskbar onToggleAppLauncher={() => setAppLauncherVisible((prev) => !prev)} />
       
-      {/* Add the Voice Assistant to the UI */}
-      <VoiceAssistant />
     </div>
   );
 };

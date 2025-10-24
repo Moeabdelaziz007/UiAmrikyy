@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { motion } from 'framer-motion';
-import { CodeIcon, LayoutGrid, Database, Cloud, Beaker, FileText, MonitorCheck } from 'lucide-react'; // Added MonitorCheck for Code Reviewer
+import { CodeIcon, LayoutGrid, Database, Cloud, Beaker, FileText, MonitorCheck, Wand2, Loader } from 'lucide-react'; // Added MonitorCheck for Code Reviewer
 import { LanguageContext } from '../../App';
 // FIX: Corrected import typo from '!from' to 'from'
 import { useTheme } from '../../contexts/ThemeContext';
@@ -46,6 +46,56 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
 
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
+  const [refiningField, setRefiningField] = useState<string | null>(null);
+
+  const handleRefinePrompt = async (
+    prompt: string,
+    context: string,
+    setter: (value: string) => void,
+    field: string
+  ) => {
+    if (!prompt) return;
+    setIsRefining(true);
+    setRefiningField(field);
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/prompt-engineer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, context }),
+      });
+      if (!response.ok) throw new Error('Failed to refine prompt');
+      const data = await response.json();
+      setter(data.refinedPrompt);
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'promptEngineer',
+        agentName: 'Prompt Engineer',
+        taskType: 'Refine Prompt',
+        taskInput: { prompt, context },
+        taskOutput: data.refinedPrompt,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+      });
+    } catch (error: any) {
+      console.error('Prompt refinement failed:', error);
+       onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'promptEngineer',
+        agentName: 'Prompt Engineer',
+        taskType: 'Refine Prompt',
+        taskInput: { prompt, context },
+        taskOutput: `Error: ${error.message}`,
+        timestamp: new Date().toISOString(),
+        status: 'error',
+        errorMessage: error.message,
+      });
+    } finally {
+      setIsRefining(false);
+      setRefiningField(null);
+    }
+  };
+
 
   const executeTask = async (
     taskKey: string, // Corresponds to key in currentText.tasks
@@ -153,14 +203,24 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
         <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
           <LayoutGrid className="w-5 h-5" /> {currentText.tasks.generateUI}
         </h4>
-        <textarea
-          placeholder={currentText.placeholders.projectDescription}
-          value={uiProjectDescription}
-          onChange={(e) => setUiProjectDescription(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={3}
-        />
+        <div className="relative">
+            <textarea
+              placeholder={currentText.placeholders.projectDescription}
+              value={uiProjectDescription}
+              onChange={(e) => setUiProjectDescription(e.target.value)}
+              className={`${inputClass} mb-3`}
+              style={{ borderColor: currentThemeColors.border }}
+              rows={3}
+            />
+            <button
+                onClick={() => handleRefinePrompt(uiProjectDescription, 'Generate UI code from a description', setUiProjectDescription, 'uiProjectDescription')}
+                disabled={isRefining || !uiProjectDescription}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
+                title="Refine with AI"
+            >
+                {isRefining && refiningField === 'uiProjectDescription' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
+            </button>
+        </div>
         <input
           type="text"
           placeholder={currentText.placeholders.uiComponent}
@@ -187,14 +247,24 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
         <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
           <Database className="w-5 h-5" /> {currentText.tasks.designAPI}
         </h4>
-        <textarea
-          placeholder={currentText.placeholders.serviceDescription}
-          value={apiServiceDescription}
-          onChange={(e) => setApiServiceDescription(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={3}
-        />
+        <div className="relative">
+            <textarea
+              placeholder={currentText.placeholders.serviceDescription}
+              value={apiServiceDescription}
+              onChange={(e) => setApiServiceDescription(e.target.value)}
+              className={`${inputClass} mb-3`}
+              style={{ borderColor: currentThemeColors.border }}
+              rows={3}
+            />
+            <button
+                onClick={() => handleRefinePrompt(apiServiceDescription, 'Design an API from a service description', setApiServiceDescription, 'apiServiceDescription')}
+                disabled={isRefining || !apiServiceDescription}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
+                title="Refine with AI"
+            >
+                {isRefining && refiningField === 'apiServiceDescription' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
+            </button>
+        </div>
         <input
           type="text"
           placeholder={currentText.placeholders.apiEndpoints}
@@ -221,14 +291,24 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
         <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
           <Cloud className="w-5 h-5" /> {currentText.tasks.createDeploymentConfig}
         </h4>
-        <textarea
-          placeholder={currentText.placeholders.serviceDescription}
-          value={deployServiceDescription}
-          onChange={(e) => setDeployServiceDescription(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={3}
-        />
+        <div className="relative">
+            <textarea
+              placeholder={currentText.placeholders.serviceDescription}
+              value={deployServiceDescription}
+              onChange={(e) => setDeployServiceDescription(e.target.value)}
+              className={`${inputClass} mb-3`}
+              style={{ borderColor: currentThemeColors.border }}
+              rows={3}
+            />
+            <button
+                onClick={() => handleRefinePrompt(deployServiceDescription, 'Create a deployment configuration from a service description', setDeployServiceDescription, 'deployServiceDescription')}
+                disabled={isRefining || !deployServiceDescription}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
+                title="Refine with AI"
+            >
+                {isRefining && refiningField === 'deployServiceDescription' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
+            </button>
+        </div>
         <input
           type="text"
           placeholder={currentText.placeholders.platform}
@@ -255,14 +335,24 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
         <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
           <Beaker className="w-5 h-5" /> {currentText.tasks.writeTests}
         </h4>
-        <textarea
-          placeholder={currentText.placeholders.featureToTest}
-          value={qaFeatureToTest}
-          onChange={(e) => setQaFeatureToTest(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={3}
-        />
+        <div className="relative">
+            <textarea
+              placeholder={currentText.placeholders.featureToTest}
+              value={qaFeatureToTest}
+              onChange={(e) => setQaFeatureToTest(e.target.value)}
+              className={`${inputClass} mb-3`}
+              style={{ borderColor: currentThemeColors.border }}
+              rows={3}
+            />
+            <button
+                onClick={() => handleRefinePrompt(qaFeatureToTest, 'Write test cases for a feature', setQaFeatureToTest, 'qaFeatureToTest')}
+                disabled={isRefining || !qaFeatureToTest}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
+                title="Refine with AI"
+            >
+                {isRefining && refiningField === 'qaFeatureToTest' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
+            </button>
+        </div>
         <input
           type="text"
           placeholder={currentText.placeholders.testFramework}
@@ -281,14 +371,24 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
         <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
           <FileText className="w-5 h-5" /> {currentText.tasks.generateDocumentation}
         </h4>
-        <textarea
-          placeholder={currentText.placeholders.codeDescription}
-          value={docCodeDescription}
-          onChange={(e) => setDocCodeDescription(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={3}
-        />
+        <div className="relative">
+            <textarea
+              placeholder={currentText.placeholders.codeDescription}
+              value={docCodeDescription}
+              onChange={(e) => setDocCodeDescription(e.target.value)}
+              className={`${inputClass} mb-3`}
+              style={{ borderColor: currentThemeColors.border }}
+              rows={3}
+            />
+            <button
+                onClick={() => handleRefinePrompt(docCodeDescription, 'Generate documentation from a code description', setDocCodeDescription, 'docCodeDescription')}
+                disabled={isRefining || !docCodeDescription}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
+                title="Refine with AI"
+            >
+                {isRefining && refiningField === 'docCodeDescription' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
+            </button>
+        </div>
         <input
           type="text"
           placeholder={currentText.placeholders.docType}

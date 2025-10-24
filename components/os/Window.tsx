@@ -79,7 +79,7 @@ const Window: React.FC<WindowProps> = ({
           dragHandleClassName="drag-handle"
         >
           <motion.div
-            className="w-full h-full bg-surface/80 backdrop-blur-xl rounded-lg shadow-2xl border flex flex-col"
+            className="w-full h-full bg-surface/80 backdrop-blur-xl rounded-lg shadow-2xl border flex flex-col overflow-hidden relative"
             style={{ 
                 borderColor: theme.colors.border,
                 background: `rgba(${theme.mode === 'dark' ? '30, 41, 59' : '255, 255, 255'} 0.8)`,
@@ -92,9 +92,29 @@ const Window: React.FC<WindowProps> = ({
             onMouseDownCapture={onFocus}
             aria-label={title}
           >
-            <header className="drag-handle h-10 flex items-center justify-between px-2 border-b cursor-grab active:cursor-grabbing flex-shrink-0" style={{ borderColor: theme.colors.border }}>
+            {/* Holographic Grid Background */}
+            <div className="absolute inset-0 z-0 opacity-[0.03] animate-grid-pan" style={{
+              backgroundImage: `linear-gradient(${theme.colors.primary} 1px, transparent 1px), linear-gradient(to right, ${theme.colors.primary} 1px, transparent 1px)`,
+              backgroundSize: '20px 20px',
+            }}></div>
+
+
+            <header className="drag-handle h-10 flex items-center justify-between px-2 border-b cursor-grab active:cursor-grabbing flex-shrink-0 relative z-10" style={{ borderColor: theme.colors.border }}>
+              {/* Holographic Scanline Effect */}
+              <motion.div 
+                className="absolute top-0 left-0 w-full h-1 bg-primary/80 filter blur-[1px]"
+                animate={{
+                  y: [0, 36], // 36px is approx height of header
+                  opacity: [0.5, 0]
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatType: 'loop',
+                  ease: 'easeInOut'
+                }}
+              />
               <div className="flex items-center gap-2 pointer-events-none">
-                {/* FIX: Use the 'color' prop instead of 'style' for Lucide icons to avoid type errors. The types have been updated to support this. */}
                 {Icon && <Icon className="w-5 h-5" color={theme.colors.primary}/>}
                 <span className="font-bold text-text select-none">{title}</span>
               </div>
@@ -106,7 +126,7 @@ const Window: React.FC<WindowProps> = ({
                 <button aria-label="Close" onClick={onClose} className="p-2 rounded-full hover:bg-error hover:text-white transition-colors text-text-secondary"><X size={16} /></button>
               </div>
             </header>
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-auto relative z-10">
               {AppComponent ? <AppComponent onTaskComplete={onTaskComplete} appId={windowData.appId} /> : <div>App component '{windowData.appId}' not found.</div>}
             </main>
           </motion.div>

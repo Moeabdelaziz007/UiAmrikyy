@@ -170,6 +170,54 @@ export const translations: {
     },
   },
   agents: {
+    promptEngineer: { // NEW PROMPT ENGINEERING AGENT
+      en: {
+        name: "Prompt Engineer",
+        description: "Refines prompts for other agents.",
+        tasks: {
+          refinePrompt: "Refine Prompt",
+        },
+        placeholders: {},
+        mockResults: {},
+      },
+      ar: {
+        name: "مهندس الأوامر",
+        description: "يحسن الأوامر للوكلاء الآخرين.",
+        tasks: {
+          refinePrompt: "تحسين الأمر",
+        },
+        placeholders: {},
+        mockResults: {},
+      },
+    },
+    chatbot: {
+      en: {
+        name: "Chatbot",
+        description: "Have a conversation with Gemini.",
+        tasks: {
+          sendMessage: "Send Message",
+        },
+        placeholders: {
+          prompt: "Ask me anything...",
+        },
+        mockResults: {
+          response: "Hello! How can I help you today?",
+        },
+      },
+      ar: {
+        name: "بوت الدردشة",
+        description: "تحدث مع Gemini.",
+        tasks: {
+          sendMessage: "إرسال رسالة",
+        },
+        placeholders: {
+          prompt: "اسألني أي شيء...",
+        },
+        mockResults: {
+          response: "مرحباً! كيف يمكنني مساعدتك اليوم؟",
+        },
+      },
+    },
     navigator: {
       en: {
         name: "Navigator",
@@ -259,48 +307,34 @@ export const translations: {
     research: {
       en: {
         name: "Research",
-        description: "Web search, travel info & fact verification",
+        description: "Web & Maps search with Gemini",
         tasks: {
           webSearch: "Web Search",
-          findHotels: "Find Hotels",
-          getReviews: "Get Reviews",
-          comparePrices: "Compare Prices",
+          locationQuery: "Location Query",
         },
         placeholders: {
-          query: "Search query (e.g., best travel apps)",
-          location: "Location (e.g., Cairo)",
-          filters: "Filters (e.g., price range)",
-          itemName: "Item name (e.g., iPhone 15)",
-          placeName: "Place Name (e.g., Pyramid Taste Restaurant)",
+          query: "Ask about anything...",
+          locationQuery: "Ask about a place or address...",
         },
         mockResults: {
           webSearch: "Found 10 results for 'best travel apps'. Top result: 'Wanderlust App'.",
-          hotels: "Found 'The Nile Hilton' (4 stars, $90/night) and 'Cairo Boutique Hotel' (3 stars, $70/night).",
-          reviews: "Reviews for 'Pyramid Taste Restaurant': 'Excellent food, great view' (4.5/5).",
-          prices: "Price for iPhone 15: $999 (Amazon), $1049 (Best Buy).",
+          locationQuery: "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France.",
         },
       },
       ar: {
         name: "البحث",
-        description: "بحث الويب، معلومات السفر والتحقق من الحقائق",
+        description: "بحث الويب والخرائط مع Gemini",
         tasks: {
           webSearch: "بحث الويب",
-          findHotels: "البحث عن الفنادق",
-          getReviews: "الحصول على المراجعات",
-          comparePrices: "مقارنة الأسعار",
+          locationQuery: "استعلام عن موقع",
         },
         placeholders: {
-          query: "استعلام البحث (مثال: أفضل تطبيقات السفر)",
-          location: "الموقع (مثال: القاهرة)",
-          filters: "الفلاتر (مثال: نطاق السعر)",
-          itemName: "اسم العنصر (مثال: آيفون 15)",
-          placeName: "اسم المكان (مثال: مطعم ذوق الهرم)",
+          query: "اسأل عن أي شيء...",
+          locationQuery: "اسأل عن مكان أو عنوان...",
         },
         mockResults: {
           webSearch: "تم العثور على 10 نتائج لـ 'أفضل تطبيقات السفر'. النتيجة الأولى: 'تطبيق Wanderlust'.",
-          hotels: "تم العثور على 'هيلتون النيل' (4 نجوم، 90 دولار/ليلة) و 'فندق القاهرة البوتيكي' (3 نجوم، 70 دولار/ليلة).",
-          reviews: "مراجعات مطعم 'ذوق الهرم': 'طعام ممتاز، منظر رائع' (4.5/5).",
-          prices: "سعر آيفون 15: 999 دولار (أمازون)، 1049 دولار (بست باي).",
+          locationQuery: "برج إيفل هو برج شبكي من الحديد المطاوع في Champ de Mars في باريس، فرنسا.",
         },
       },
     },
@@ -457,44 +491,44 @@ export const translations: {
     media: {
       en: {
         name: "Media",
-        description: "Search videos, generate content & thumbnails",
+        description: "Generate & edit images and videos",
         tasks: {
-          searchVideos: "Search Videos",
-          getVideoDetails: "Get Video Details",
-          generateVideo: "Generate Video (Veo 3)",
-          createThumbnail: "Create Thumbnail (Imagen 3)",
+          generateImage: "Generate Image (Imagen)",
+          generateVideo: "Generate Video (Veo)",
+          editImage: "Edit Image (Gemini)",
+          searchVideos: "Search YouTube",
         },
         placeholders: {
           query: "Search query (e.g., Cairo travel vlogs)",
           videoId: "Video ID (e.g., abcdefg)",
-          prompt: "Generation Prompt (e.g., futuristic city)",
+          prompt: "Generation Prompt (e.g., a futuristic city)",
+          editPrompt: "Edit instruction (e.g., add a retro filter)",
         },
         mockResults: {
+          generate: "Video/Image generated and ready.",
           search: "Found 5 videos for 'Cairo travel vlogs'.",
-          details: "Video 'Egypt Adventure' by John Doe (10 min).",
-          generate: "Video 'futuristic city' generated and ready.",
-          thumbnail: "Thumbnail 'futuristic city' created.",
+          edit: "Image edited successfully.",
         },
       },
       ar: {
         name: "الوسائط",
-        description: "البحث عن مقاطع الفيديو، إنشاء المحتوى والصور المصغرة",
+        description: "إنشاء وتعديل الصور والفيديوهات",
         tasks: {
-          searchVideos: "البحث عن مقاطع الفيديو",
-          getVideoDetails: "الحصول على تفاصيل الفيديو",
-          generateVideo: "إنشاء فيديو (Veo 3)",
-          createThumbnail: "إنشاء صورة مصغرة (Imagen 3)",
+          generateImage: "إنشاء صورة (Imagen)",
+          generateVideo: "إنشاء فيديو (Veo)",
+          editImage: "تعديل صورة (Gemini)",
+          searchVideos: "بحث يوتيوب",
         },
         placeholders: {
           query: "استعلام البحث (مثال: مدونات سفر القاهرة)",
           videoId: "معرف الفيديو (مثال: abcdefg)",
           prompt: "موجه الإنشاء (مثال: مدينة مستقبلية)",
+          editPrompt: "تعليمات التعديل (مثال: أضف فلتر قديم)",
         },
         mockResults: {
+          generate: "تم إنشاء الفيديو/الصورة وهي جاهزة.",
           search: "تم العثور على 5 مقاطع فيديو لـ 'مدونات سفر القاهرة'.",
-          details: "فيديو 'مغامرة مصر' بواسطة جون دو (10 دقائق).",
-          generate: "تم إنشاء فيديو 'مدينة مستقبلية' وهو جاهز.",
-          thumbnail: "تم إنشاء صورة مصغرة لـ 'مدينة مستقبلية'.",
+          edit: "تم تعديل الصورة بنجاح.",
         },
       },
     },

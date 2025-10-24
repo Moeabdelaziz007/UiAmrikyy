@@ -4,7 +4,7 @@ import { AppDefinition } from '../types';
 import { translations } from './i18n';
 
 // Import Icons
-import { MapPinIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon } from '../components/IconComponents';
+import { MapPinIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon } from '../components/IconComponents';
 
 // Import App Components
 import NavigatorAgentUI from '../components/agents/NavigatorAgentUI';
@@ -22,6 +22,7 @@ import FileManagerApp from '../apps/FileManager';
 import TerminalApp from '../apps/Terminal';
 import SettingsApp from '../apps/Settings';
 import TaskHistoryApp from '../components/apps/TaskHistoryApp';
+import ChatbotApp from '../apps/ChatbotApp';
 
 
 export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
@@ -39,10 +40,19 @@ export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   terminal: TerminalApp,
   settings: SettingsApp,
   taskHistory: TaskHistoryApp,
+  chatbot: ChatbotApp,
 };
 
 export const allApps: AppDefinition[] = [
   // Agents
+  { 
+    id: 'chatbot', 
+    name: { en: translations.agents.chatbot.en.name, ar: translations.agents.chatbot.ar.name }, 
+    description: { en: translations.agents.chatbot.en.description, ar: translations.agents.chatbot.ar.description }, 
+    icon: MessageSquareIcon, 
+    color: 'green',
+    component: ChatbotApp,
+  },
   { 
     id: 'navigator', 
     name: { en: translations.agents.navigator.en.name, ar: translations.agents.navigator.ar.name }, 
