@@ -55,16 +55,39 @@ class TravelAgent {
     const ai = getAi();
     const systemInstruction = `You are an expert travel planner. Create a detailed, day-by-day itinerary based on the user's request. Include suggested timings, activity descriptions, and travel tips. Format the output clearly using Markdown.`;
     
-    const response = await ai.models.generateContent({
+    // 1. Generate the text-based itinerary
+    const itineraryResponse = await ai.models.generateContent({
         model: this.proModel,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         config: { 
             systemInstruction,
-            thinkingConfig: { thinkingBudget: 32768 },
+            thinkingConfig: { thinkingBudget: 32768 }, // Added thinking mode for complex planning
         },
     });
 
-    return { text: response.text };
+    // 2. Generate a creative prompt for Imagen
+    const imagePromptEnhancerPrompt = `You are an AI assistant that creates beautiful image generation prompts. Based on the user's travel query, create a short, visually descriptive prompt for an image generation model like Imagen. The prompt should capture the essence and mood of the destination. Focus on cinematic and photographic styles. User query: "${prompt}"`;
+    const imagePromptResponse = await ai.models.generateContent({
+        model: this.flashModel,
+        contents: imagePromptEnhancerPrompt,
+    });
+    const imagePrompt = imagePromptResponse.text.trim();
+    logger.info(`[${this.name}] Generated image prompt: "${imagePrompt}"`);
+    
+    // 3. Generate the image with Imagen
+    const imageResponse = await ai.models.generateImages({
+      model: 'imagen-4.0-generate-001',
+      prompt: imagePrompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: 'image/jpeg',
+        aspectRatio: '16:9',
+      },
+    });
+
+    const base64ImageBytes = imageResponse.generatedImages[0].image.imageBytes;
+
+    return { text: itineraryResponse.text, image: `data:image/jpeg;base64,${base64ImageBytes}` };
   }
 
   async findFlights(origin, destination, dates) {

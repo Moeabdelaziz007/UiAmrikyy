@@ -6,7 +6,7 @@ class ChatAgent {
   constructor() {
     this.name = 'Chat Agent';
     this.description = 'Handles conversational chat with Gemini.';
-    this.modelName = 'gemini-flash-lite-latest';
+    this.modelName = 'gemini-2.5-flash'; 
   }
 
   async executeTask(task) {

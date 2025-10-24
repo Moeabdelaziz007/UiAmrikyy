@@ -34,9 +34,10 @@ class PromptEngineeringAgent {
       const ai = getAi();
       const response = await ai.models.generateContent({
         model: this.modelName,
-        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        contents: userPrompt,
         config: {
           systemInstruction,
+          thinkingConfig: { thinkingBudget: 32768 },
         },
       });
       

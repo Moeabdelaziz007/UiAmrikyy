@@ -18,7 +18,7 @@
  */
 
 const { getAi } = require('../services/geminiService');
-const logger = require('../../utils/logger');
+const logger = require('../utils/logger');
 
 class MarketingAgent {
   constructor() {
@@ -26,7 +26,8 @@ class MarketingAgent {
     this.icon = '📢'; // Megaphone emoji
     this.description = 'Develops strategies, creates content, and analyzes campaigns with specialized sub-agents.';
     
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    this.proModel = 'gemini-2.5-pro';
+    this.flashModel = 'gemini-2.5-flash';
 
     if (!process.env.API_KEY) {
       logger.warn('[MarketingAgent] API_KEY is not set. Marketing Agent will not be able to make real API calls.');
@@ -99,14 +100,12 @@ Provide a clear summary of findings and strategic recommendations.
   /**
    * Helper to make Gemini API calls with Google Search tool
    */
-  async _callGeminiWithSearch(systemPrompt, userPrompt, maxOutputTokens, thinkingBudget) {
+  async _callGeminiWithSearch(systemPrompt, userPrompt) {
     const ai = getAi();
     const response = await ai.models.generateContent({
-      model: this.modelName,
+      model: this.flashModel,
       contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
       config: {
-        maxOutputTokens: maxOutputTokens,
-        thinkingConfig: { thinkingBudget: thinkingBudget },
         tools: [{ googleSearch: {} }], // Enable Google Search grounding
       }
     });
@@ -172,7 +171,7 @@ Provide:
 4.  Key opportunities and threats.
 5.  Actionable recommendations based on findings.`;
 
-    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt, 1500, 400);
+    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt);
 
     return {
       success: true,
@@ -200,7 +199,7 @@ Provide:
 4.  Technical SEO suggestions (site speed, mobile-friendliness, crawlability).
 5.  Content ideas to target long-tail keywords.`;
 
-    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt, 1500, 400);
+    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt);
 
     return {
       success: true,
@@ -227,7 +226,7 @@ Provide:
 4.  Suggested tone of voice and key messaging.
 5.  Distribution channels for the content.`;
 
-    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt, 1200, 350);
+    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt);
 
     return {
       success: true,
@@ -254,7 +253,7 @@ Provide:
 4.  Hashtag strategy.
 5.  Community interaction guidelines.`;
 
-    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt, 1200, 350);
+    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt);
 
     return {
       success: true,
@@ -283,7 +282,7 @@ Provide:
 5.  High-level budget allocation across channels.
 6.  Timeline and key milestones.`;
 
-    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt, 1500, 400);
+    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt);
 
     return {
       success: true,
@@ -299,28 +298,62 @@ Provide:
    */
   async analyzeMarketingData(task) {
     const subAgent = this.subAgents.analyticsExpert;
-    const { dataToAnalyze, metrics } = task;
+    const { dataToAnalyze, metrics, searchQuery, fileData } = task;
 
-    const userPrompt = `Analyze the following marketing data:
-"${dataToAnalyze || 'N/A'}".
-Focus on these key metrics: "${metrics || 'N/A'}".
+    if (fileData && fileData.data) {
+        // New path for file analysis using Gemini Pro
+        logger.info(`[${this.name}] Analyzing uploaded data file.`);
+        const userPrompt = `Analyze the attached data file.
+        Instructions for analysis: "${dataToAnalyze || 'Provide a general summary and key insights.'}"
+        Key Metrics to focus on: "${metrics || 'N/A'}"`;
+        
+        const ai = getAi();
+        const response = await ai.models.generateContent({
+            model: this.proModel,
+            contents: [{
+                parts: [
+                    { text: `${subAgent.systemPrompt}\n\n${userPrompt}` },
+                    { inlineData: { data: fileData.data, mimeType: fileData.mimeType } }
+                ]
+            }],
+            config: {
+                thinkingConfig: { thinkingBudget: 32768 }
+            }
+        });
+        
+        return {
+            success: true,
+            subAgent: subAgent.name,
+            icon: subAgent.icon,
+            result: { text: response.text }, // No grounding chunks for file analysis
+            message: 'Data file analyzed successfully'
+        };
 
-Provide:
-1.  Summary of key findings and trends from the data.
-2.  Performance analysis of specified metrics.
-3.  Identification of strengths, weaknesses, opportunities, and threats.
-4.  Actionable recommendations to improve marketing effectiveness.
-5.  Suggestions for further data collection or analysis.`;
+    } else {
+        // Existing path for web search-based analysis
+        logger.info(`[${this.name}] Analyzing data using web search.`);
+        const userPrompt = `Analyze the following marketing data:
+        "${dataToAnalyze || 'N/A'}".
+        Search for: "${searchQuery || 'general marketing trends'}".
+        Focus on these key metrics: "${metrics || 'N/A'}".
 
-    const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt, 1500, 400);
+        Provide:
+        1.  Summary of key findings and trends from the data and your web search.
+        2.  Performance analysis of specified metrics.
+        3.  Identification of strengths, weaknesses, opportunities, and threats.
+        4.  Actionable recommendations to improve marketing effectiveness.
+        5.  Suggestions for further data collection or analysis.`;
 
-    return {
-      success: true,
-      subAgent: subAgent.name,
-      icon: subAgent.icon,
-      result: response, // Contains text and groundingChunks
-      message: 'Marketing data analyzed successfully'
-    };
+        const response = await this._callGeminiWithSearch(subAgent.systemPrompt, userPrompt);
+
+        return {
+            success: true,
+            subAgent: subAgent.name,
+            icon: subAgent.icon,
+            result: response,
+            message: 'Marketing data analyzed successfully'
+        };
+    }
   }
 
   /**

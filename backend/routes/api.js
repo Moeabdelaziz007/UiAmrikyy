@@ -16,6 +16,8 @@ const MarketingAgent = require('../agents/MarketingAgent'); // Import MarketingA
 const ChatAgent = require('../agents/ChatAgent'); // Import ChatAgent
 const PromptEngineeringAgent = require('../agents/PromptEngineeringAgent'); // Import PromptEngineeringAgent
 const VoiceControlAgent = require('../agents/VoiceControlAgent'); // Import VoiceControlAgent
+const GuardianAgent = require('../agents/GuardianAgent'); // Import GuardianAgent
+const ContentCreatorAgent = require('../agents/ContentCreatorAgent'); // Import ContentCreatorAgent
 const logger = require('../utils/logger');
 
 
@@ -33,6 +35,8 @@ const marketingAgent = new MarketingAgent(); // Instantiate MarketingAgent
 const chatAgent = new ChatAgent();
 const promptEngineeringAgent = new PromptEngineeringAgent();
 const voiceControlAgent = new VoiceControlAgent();
+const guardianAgent = new GuardianAgent(); // Instantiate GuardianAgent
+const contentCreatorAgent = new ContentCreatorAgent(); // Instantiate ContentCreatorAgent
 
 
 // --- Orchestrator Route ---
@@ -76,6 +80,17 @@ router.post('/agents/chat', async (req, res) => {
     res.json(result);
   } catch (error) {
     logger.error('Chat Agent error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Content Creator Agent
+router.post('/agents/content-creator', async (req, res) => {
+  try {
+    const result = await contentCreatorAgent.executeTask(req.body);
+    res.json(result);
+  } catch (error) {
+    logger.error('Content Creator Agent error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -228,6 +243,19 @@ router.post('/agents/prompt-engineer', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Guardian Agent (Self-Healing)
+router.post('/agents/guardian', async (req, res) => {
+  const { failedTask } = req.body;
+  try {
+    const result = await guardianAgent.executeTask({ failedTask });
+    res.json(result);
+  } catch (error) {
+    logger.error('Guardian Agent error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // --- AIX Test Routes ---
 router.post('/test-aix', async (req, res) => {

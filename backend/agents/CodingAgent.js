@@ -26,7 +26,7 @@ class CodingAgent {
     this.icon = '💻';
     this.description = 'Super coder with 6 specialized sub-agents';
 
-    this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-pro';
+    this.modelName = 'gemini-2.5-pro';
 
     if (!process.env.API_KEY) {
       logger.warn('[CodingAgent] API_KEY is not set. Coding Agent will not be able to make real API calls.');
@@ -142,25 +142,22 @@ Provide detailed code reviews with actionable improvements.
       throw new Error('API_KEY is not configured. Cannot make real AI calls.');
     }
 
-    // Simulate network delay for consistency with other agents
-    await new Promise(resolve => setTimeout(resolve, 500)); 
-
     try {
       const ai = getAi();
       switch (task.type) {
-        case 'generateUI': // Changed from GENERATE_UI to match frontend
+        case 'generateUI':
           return await this.generateUI(task, ai);
 
-        case 'designAPI': // Changed from DESIGN_API to match frontend
+        case 'designAPI':
           return await this.designAPI(task, ai);
 
-        case 'createDeploymentConfig': // Changed from CREATE_DEPLOYMENT to match frontend
+        case 'createDeploymentConfig':
           return await this.createDeployment(task, ai);
 
-        case 'writeTests': // Changed from WRITE_TESTS to match frontend
+        case 'writeTests':
           return await this.writeTests(task, ai);
 
-        case 'generateDocumentation': // Changed from GENERATE_DOCS to match frontend
+        case 'generateDocumentation':
           return await this.generateDocs(task, ai);
 
         case 'reviewCode': 
@@ -168,10 +165,6 @@ Provide detailed code reviews with actionable improvements.
 
         case 'refactorCode':
           return await this.refactorCode(task, ai);
-
-        // This would be orchestrated externally by a higher-level agent if needed
-        case 'generateFullProject': 
-          return await this.generateFullProject(task.prompt, ai); 
 
         default:
           throw new Error(`Unknown task type: ${task.type}`);
@@ -181,6 +174,19 @@ Provide detailed code reviews with actionable improvements.
       throw error;
     }
   }
+  
+  async _callGemini(subAgent, userPrompt, ai) {
+    const result = await ai.models.generateContent({
+      model: this.modelName,
+      contents: userPrompt,
+      config: {
+        systemInstruction: subAgent.systemPrompt,
+        thinkingConfig: { thinkingBudget: 32768 },
+      }
+    });
+    return result.text;
+  }
+
 
   /**
    * Sub-Agent 1: UI/UX Expert - Generate frontend code
@@ -201,14 +207,7 @@ Key requirements:
 
 Provide complete, runnable code.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text; // Use .text to get string output
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
@@ -240,14 +239,7 @@ Include:
 
 Provide complete, production-ready backend code/schema.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text;
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
@@ -279,14 +271,7 @@ Include:
 
 Provide complete, production-ready deployment files.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text;
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
@@ -316,14 +301,7 @@ Include:
 
 Provide complete, runnable test suite.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text;
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
@@ -354,14 +332,7 @@ Include:
 
 Provide complete, well-formatted documentation.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text;
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
@@ -393,20 +364,13 @@ Provide a detailed code review with:
 
 Be constructive and specific.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text;
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
       subAgent: subAgent.name,
       icon: subAgent.icon,
-      result: response, // Renamed 'review' to 'result' for consistency
+      result: response,
       message: 'Code review completed successfully'
     };
   }
@@ -430,14 +394,7 @@ ${code}
 
 Provide ONLY the refactored code block.`;
 
-    const result = await ai.models.generateContent({
-      model: this.modelName,
-      contents: [{ role: 'user', parts: [{ text: `${subAgent.systemPrompt}\n\n${userPrompt}` }] }],
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
-      }
-    });
-    const response = result.text;
+    const response = await this._callGemini(subAgent, userPrompt, ai);
 
     return {
       success: true,
@@ -445,121 +402,6 @@ Provide ONLY the refactored code block.`;
       icon: subAgent.icon,
       result: response,
       message: 'Code refactored successfully'
-    };
-  }
-
-
-  /**
-   * Orchestrate all sub-agents for a full project
-   * This is a conceptual example for backend orchestration.
-   * For the frontend, individual tasks are exposed.
-   */
-  async generateFullProject(prompt, ai) {
-    logger.info('[CodingAgent] Generating full project with all sub-agents...');
-
-    const results = {
-      success: true,
-      project: prompt,
-      subAgentResults: {}
-    };
-
-    try {
-      // These would ideally be more complex and depend on the output of previous steps
-      // For this example, we'll run them based on the initial prompt or generic tasks
-
-      // 1. UI/UX Expert generates frontend
-      logger.info('[CodingAgent] Sub-Agent 1: UI/UX Expert working...');
-      results.subAgentResults.ui = await this.generateUI({
-        projectDescription: prompt,
-        component: 'full application UI structure',
-        framework: 'React with Tailwind CSS'
-      }, ai);
-
-      // 2. API Architect designs backend
-      logger.info('[CodingAgent] Sub-Agent 2: API Architect working...');
-      results.subAgentResults.api = await this.designAPI({
-        serviceDescription: prompt,
-        endpoints: '/users, /posts, /comments',
-        language: 'Node.js/Express'
-      }, ai);
-
-      // 3. DevOps Engineer creates deployment
-      logger.info('[CodingAgent] Sub-Agent 3: DevOps Engineer working...');
-      results.subAgentResults.deployment = await this.createDeployment({
-        serviceDescription: prompt,
-        platform: 'Docker/Kubernetes',
-        ciCdTool: 'GitHub Actions'
-      }, ai);
-
-      // 4. QA Specialist writes tests
-      logger.info('[CodingAgent] Sub-Agent 4: QA Specialist working...');
-      results.subAgentResults.tests = await this.writeTests({
-        feature: `${prompt} main features`,
-        testFramework: 'Jest/Cypress'
-      }, ai);
-
-      // 5. Documentation Writer generates docs
-      logger.info('[CodingAgent] Sub-Agent 5: Documentation Writer working...');
-      results.subAgentResults.docs = await this.generateDocs({
-        codeDescription: prompt,
-        docType: 'developer documentation and user guide'
-      }, ai);
-
-      // 6. Code Reviewer reviews everything
-      logger.info('[CodingAgent] Sub-Agent 6: Code Reviewer working...');
-      const allCode = `
-Frontend:
-${results.subAgentResults.ui.result}
-
-Backend:
-${results.subAgentResults.api.result}
-
-Deployment Configs:
-${results.subAgentResults.deployment.result}
-
-Tests:
-${results.subAgentResults.tests.result}
-`;
-      results.subAgentResults.review = await this.reviewCode(allCode, ai);
-
-      results.message = 'Full project generated successfully by all 6 sub-agents';
-      results.summary = {
-        totalSubAgents: 6,
-        completedTasks: Object.keys(results.subAgentResults).length,
-        status: 'complete'
-      };
-
-      return results;
-
-    } catch (error) {
-      logger.error(`[CodingAgent] Full project generation error: ${error.message}`);
-      results.success = false;
-      results.error = error.message;
-      return results;
-    }
-  }
-
-  /**
-   * Get sub-agent information
-   */
-  getSubAgents() {
-    return Object.entries(this.subAgents).map(([id, agent]) => ({
-      id,
-      name: agent.name,
-      icon: agent.icon,
-      expertise: agent.expertise
-    }));
-  }
-
-  /**
-   * Health check
-   */
-  async healthCheck() {
-    return {
-      success: true,
-      agent: this.name,
-      subAgents: this.getSubAgents(),
-      status: 'healthy'
     };
   }
 }

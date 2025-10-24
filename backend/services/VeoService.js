@@ -1,5 +1,5 @@
 // backend/services/VeoService.js
-const { getAi } = require('./geminiService');
+const { GoogleGenAI } = require('@google/genai');
 const logger = require('../utils/logger');
 
 class VeoService {
@@ -14,7 +14,7 @@ class VeoService {
         }
 
         try {
-            const ai = getAi();
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
             logger.info(`[VeoService] Starting video generation with prompt: "${prompt}"`);
 
             const request = {
@@ -35,7 +35,7 @@ class VeoService {
             }
 
             const operation = await ai.models.generateVideos(request);
-            logger.info(`[VeoService] Video generation started. Operation:`, operation);
+            logger.info(`[VeoService] Video generation started. Operation name: ${operation.name}`);
             return operation;
 
         } catch (error) {
@@ -53,8 +53,8 @@ class VeoService {
         }
 
         try {
-            const ai = getAi();
-            logger.debug(`[VeoService] Checking status for operation:`, operation);
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+            logger.debug(`[VeoService] Checking status for operation: ${operation.name}`);
             const updatedOperation = await ai.operations.getVideosOperation({ operation });
             logger.debug(`[VeoService] Status check complete. Done: ${updatedOperation.done}`);
             return updatedOperation;
