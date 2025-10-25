@@ -5,14 +5,12 @@ export interface AgentData {
     description: string;
     tasks: Record<string, string>;
     placeholders: Record<string, string>;
-    mockResults: Record<string, string | Record<string, any>>; // Updated to allow object for mockResults
   };
   ar: {
     name: string;
     description: string;
     tasks: Record<string, string>;
     placeholders: Record<string, string>;
-    mockResults: Record<string, string | Record<string, any>>; // Updated to allow object for mockResults
   };
 }
 
@@ -50,6 +48,8 @@ export const translations: {
       errorMessage: "Error Message",
       timestamp: "Timestamp",
       loading: "AI is processing...",
+      // FIX: Add 'audioPlayed' key for TTS feedback.
+      audioPlayed: "Audio generated and played.",
       // Settings
       language: "Language",
       english: "English",
@@ -137,6 +137,8 @@ export const translations: {
       errorMessage: "رسالة الخطأ",
       timestamp: "التاريخ والوقت",
       loading: "الذكاء الاصطناعي يعالج...",
+      // FIX: Add 'audioPlayed' key for TTS feedback.
+      audioPlayed: "تم إنشاء الصوت وتشغيله.",
       // Settings
       language: "اللغة",
       english: "الإنجليزية",
@@ -198,6 +200,42 @@ export const translations: {
     },
   },
   agents: {
+    dnaMaker: { // NEW DNA MAKER AGENT
+      en: {
+        name: "DNA Maker",
+        description: "Creates new skills & personas for other agents by generating .aix files.",
+        tasks: {
+          createAixSkill: "Generate AIX Skill",
+        },
+        placeholders: {
+          describeSkill: "Describe New Skill",
+          skillName: "Skill Name",
+          skillNamePlaceholder: "e.g., Pirate Shanties",
+          skillDescription: "Skill Description",
+          skillDescriptionPlaceholder: "e.g., A skill to generate pirate-themed sea shanties based on a topic.",
+          generatedAix: "Generated .aix File",
+          downloadAix: "Download .aix",
+          outputPlaceholder: "Generated AIX content will appear here...",
+        },
+      },
+      ar: {
+        name: "صانع الحمض النووي",
+        description: "ينشئ مهارات وشخصيات جديدة للوكلاء الآخرين عن طريق إنشاء ملفات .aix.",
+        tasks: {
+          createAixSkill: "إنشاء مهارة AIX",
+        },
+        placeholders: {
+          describeSkill: "صف المهارة الجديدة",
+          skillName: "اسم المهارة",
+          skillNamePlaceholder: "مثال: أغاني القراصنة",
+          skillDescription: "وصف المهارة",
+          skillDescriptionPlaceholder: "مثال: مهارة لإنشاء أغاني قراصنة بناءً على موضوع معين.",
+          generatedAix: "ملف .aix الذي تم إنشاؤه",
+          downloadAix: "تنزيل .aix",
+          outputPlaceholder: "سيظهر محتوى AIX الذي تم إنشاؤه هنا...",
+        },
+      },
+    },
     contentCreator: { // NEW CONTENT CREATOR AGENT
       en: {
         name: "Content Creator",
@@ -213,7 +251,6 @@ export const translations: {
           noSources: "Upload documents to begin.",
           ask: "Ask",
         },
-        mockResults: {},
       },
       ar: {
         name: "صانع المحتوى",
@@ -229,7 +266,6 @@ export const translations: {
           noSources: "قم بتحميل المستندات للبدء.",
           ask: "اسأل",
         },
-        mockResults: {},
       },
     },
     nexus: { // NEW NEXUS AGENT
@@ -256,7 +292,6 @@ export const translations: {
           refactorInstructions: "Instructions for refactoring...",
           selectCode: "Select some code to get started.",
         },
-        mockResults: {},
       },
       ar: {
         name: "الرابط (The Nexus)",
@@ -281,7 +316,6 @@ export const translations: {
           refactorInstructions: "تعليمات إعادة الصياغة...",
           selectCode: "حدد جزءاً من الكود للبدء.",
         },
-        mockResults: {},
       },
     },
     promptEngineer: { // NEW PROMPT ENGINEERING AGENT
@@ -292,7 +326,6 @@ export const translations: {
           refinePrompt: "Refine Prompt",
         },
         placeholders: {},
-        mockResults: {},
       },
       ar: {
         name: "مهندس الأوامر",
@@ -301,7 +334,6 @@ export const translations: {
           refinePrompt: "تحسين الأمر",
         },
         placeholders: {},
-        mockResults: {},
       },
     },
     chatbot: {
@@ -314,9 +346,6 @@ export const translations: {
         placeholders: {
           prompt: "Ask me anything...",
         },
-        mockResults: {
-          response: "Hello! How can I help you today?",
-        },
       },
       ar: {
         name: "بوت الدردشة",
@@ -326,9 +355,6 @@ export const translations: {
         },
         placeholders: {
           prompt: "اسألني أي شيء...",
-        },
-        mockResults: {
-          response: "مرحباً! كيف يمكنني مساعدتك اليوم؟",
         },
       },
     },
@@ -356,7 +382,6 @@ export const translations: {
           directionsOrigin: "Origin",
           directionsDestination: "Destination",
         },
-        mockResults: {},
       },
       ar: {
         name: "وكيل السفر",
@@ -381,7 +406,6 @@ export const translations: {
           directionsOrigin: "المصدر",
           directionsDestination: "الوجهة",
         },
-        mockResults: {},
       },
     },
     vision: {
@@ -398,12 +422,6 @@ export const translations: {
           imageUrl: "Image URL or Base64 (mock)",
           prompt: "Prompt (e.g., Describe this image)",
         },
-        mockResults: {
-          analyze: "This image shows a desert landscape with ancient pyramids under a clear sky.",
-          extract: "Extracted text: 'Welcome to Egypt'",
-          landmark: "Identified landmark: 'Great Pyramid of Giza'.",
-          objects: "Detected objects: 'camel', 'person', 'sand'.",
-        },
       },
       ar: {
         name: "الرؤية",
@@ -417,12 +435,6 @@ export const translations: {
         placeholders: {
           imageUrl: "رابط الصورة أو Base64 (وهمي)",
           prompt: "الموجه (مثال: صف هذه الصورة)",
-        },
-        mockResults: {
-          analyze: "تظهر هذه الصورة منظرًا صحراويًا به أهرامات قديمة تحت سماء صافية.",
-          extract: "النص المستخرج: 'مرحباً بكم في مصر'",
-          landmark: "المعلم المحدد: 'هرم خوفو الأكبر'.",
-          objects: "الكائنات المكتشفة: 'جمل', 'شخص', 'رمل'.",
         },
       },
     },
@@ -438,10 +450,6 @@ export const translations: {
           query: "Ask about anything...",
           locationQuery: "Ask about a place or address...",
         },
-        mockResults: {
-          webSearch: "Found 10 results for 'best travel apps'. Top result: 'Wanderlust App'.",
-          locationQuery: "The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France.",
-        },
       },
       ar: {
         name: "البحث",
@@ -453,10 +461,6 @@ export const translations: {
         placeholders: {
           query: "اسأل عن أي شيء...",
           locationQuery: "اسأل عن مكان أو عنوان...",
-        },
-        mockResults: {
-          webSearch: "تم العثور على 10 نتائج لـ 'أفضل تطبيقات السفر'. النتيجة الأولى: 'تطبيق Wanderlust'.",
-          locationQuery: "برج إيفل هو برج شبكي من الحديد المطاوع في Champ de Mars في باريس، فرنسا.",
         },
       },
     },
@@ -476,12 +480,6 @@ export const translations: {
           sourceLang: "Source Language (optional)",
           audioInput: "Audio input (mock Base64)",
         },
-        mockResults: {
-          translate: "Translated text: 'مرحباً بالعالم'",
-          detect: "Detected language: 'English' (confidence: 0.98)",
-          voiceToText: "Transcription: 'Hello, how are you today?'",
-          textToVoice: "Generated audio for 'Welcome'.",
-        },
       },
       ar: {
         name: "المترجم",
@@ -498,18 +496,12 @@ export const translations: {
           sourceLang: "اللغة المصدر (اختياري)",
           audioInput: "إدخال صوتي (وهمي Base64)",
         },
-        mockResults: {
-          translate: "النص المترجم: 'Hello World'",
-          detect: "اللغة المكتشفة: 'العربية' (ثقة: 0.98)",
-          voiceToText: "النسخ: 'مرحباً، كيف حالك اليوم؟'",
-          textToVoice: "تم إنشاء صوت لـ 'أهلاً'.",
-        },
       },
     },
     scheduler: {
       en: {
         name: "Scheduler",
-        description: "Create events, reminders & sync itineraries",
+        description: "Uses AI to simulate creating events & reminders in a calendar.",
         tasks: {
           createEvent: "Create Event",
           checkAvailability: "Check Availability",
@@ -526,16 +518,10 @@ export const translations: {
           reminder: "Reminder (e.g., 30 minutes before)",
           itineraryData: "Itinerary Data (JSON mock)",
         },
-        mockResults: {
-          create: "Event 'Cairo Trip' created in your calendar.",
-          check: "You are available from 10:00 to 12:00 on Jan 23.",
-          reminder: "Reminder set for 'Flight to Luxor'.",
-          sync: "Itinerary 'Egypt Adventure' synced to calendar.",
-        },
       },
       ar: {
         name: "الجدولة",
-        description: "إنشاء الأحداث، التذكيرات ومزامنة مسارات الرحلة",
+        description: "يستخدم الذكاء الاصطناعي لمحاكاة إنشاء الأحداث والتذكيرات في التقويم.",
         tasks: {
           createEvent: "إنشاء حدث",
           checkAvailability: "التحقق من التوفر",
@@ -552,18 +538,12 @@ export const translations: {
           reminder: "التذكير (مثال: 30 دقيقة قبل)",
           itineraryData: "بيانات مسار الرحلة (JSON وهمي)",
         },
-        mockResults: {
-          create: "تم إنشاء حدث 'رحلة القاهرة' في تقويمك.",
-          check: "أنت متاح من 10:00 إلى 12:00 في 23 يناير.",
-          reminder: "تم تعيين تذكير لـ 'رحلة إلى الأقصر'.",
-          sync: "تمت مزامنة مسار الرحلة 'مغامرة مصر' مع التقويم.",
-        },
       },
     },
     storage: {
       en: {
         name: "Storage",
-        description: "Save documents, photos & itineraries",
+        description: "Uses AI to simulate saving documents & sharing files in cloud storage.",
         tasks: {
           saveDocument: "Save Document",
           createItinerary: "Create Itinerary",
@@ -578,16 +558,10 @@ export const translations: {
           fileId: "File ID",
           email: "Recipient Email",
         },
-        mockResults: {
-          save: "Document 'MyNotes.txt' saved to Drive.",
-          create: "Itinerary 'Egypt Adventure' created in Google Docs.",
-          upload: "File 'photo.jpg' uploaded to Drive.",
-          share: "File shared with user@example.com.",
-        },
       },
       ar: {
         name: "التخزين",
-        description: "حفظ المستندات، الصور ومسارات الرحلة",
+        description: "يستخدم الذكاء الاصطناعي لمحاكاة حفظ المستندات ومشاركة الملفات في التخزين السحابي.",
         tasks: {
           saveDocument: "حفظ مستند",
           createItinerary: "إنشاء مسار رحلة",
@@ -601,12 +575,6 @@ export const translations: {
           fileInput: "ملف للتحميل (وهمي Base64)",
           fileId: "معرف الملف",
           email: "بريد المستلم الإلكتروني",
-        },
-        mockResults: {
-          save: "تم حفظ المستند 'MyNotes.txt' في Drive.",
-          create: "تم إنشاء مسار الرحلة 'مغامرة مصر' في مستندات Google.",
-          upload: "تم تحميل الملف 'photo.jpg' إلى Drive.",
-          share: "تمت مشاركة الملف مع user@example.com.",
         },
       },
     },
@@ -629,11 +597,6 @@ export const translations: {
           videoUrl: "YouTube URL",
           videoPrompt: "What do you want to know about the video?",
         },
-        mockResults: {
-          generate: "Video/Image generated and ready.",
-          search: "Found 5 videos for 'Cairo travel vlogs'.",
-          edit: "Image edited successfully.",
-        },
       },
       ar: {
         name: "الوسائط",
@@ -653,17 +616,12 @@ export const translations: {
           videoUrl: "رابط يوتيوب",
           videoPrompt: "ماذا تريد أن تعرف عن الفيديو؟",
         },
-        mockResults: {
-          generate: "تم إنشاء الفيديو/الصورة وهي جاهزة.",
-          search: "تم العثور على 5 مقاطع فيديو لـ 'مدونات سفر القاهرة'.",
-          edit: "تم تعديل الصورة بنجاح.",
-        },
       },
     },
     communicator: {
       en: {
         name: "Communicator",
-        description: "Send emails, notifications & share info",
+        description: "Sends real Telegram messages & uses AI to simulate sending emails.",
         tasks: {
           sendEmail: "Send Email",
           emailItinerary: "Email Itinerary",
@@ -679,16 +637,10 @@ export const translations: {
           telegramChatId: "Telegram Chat ID", // New placeholder
           telegramMessage: "Message", // New placeholder
         },
-        mockResults: {
-          email: "Email sent successfully to user@example.com.",
-          itinerary: "Itinerary emailed to family members.",
-          notification: "Notification 'Your flight is delayed' sent.",
-          telegram: "Telegram message sent successfully.", // New mock result
-        },
       },
       ar: {
         name: "المتواصل",
-        description: "إرسال رسائل البريد الإلكتروني، الإشعارات ومشاركة المعلومات",
+        description: "يرسل رسائل تيليجرام حقيقية ويستخدم الذكاء الاصطناعي لمحاكاة إرسال رسائل البريد الإلكتروني.",
         tasks: {
           sendEmail: "إرسال بريد إلكتروني",
           emailItinerary: "إرسال مسار الرحلة بالبريد الإلكتروني",
@@ -703,12 +655,6 @@ export const translations: {
           message: "رسالة الإشعار",
           telegramChatId: "معرف دردشة تيليجرام", // New placeholder
           telegramMessage: "الرسالة", // New placeholder
-        },
-        mockResults: {
-          email: "تم إرسال البريد الإلكتروني بنجاح إلى user@example.com.",
-          itinerary: "تم إرسال مسار الرحلة بالبريد الإلكتروني لأفراد العائلة.",
-          notification: "تم إرسال إشعار 'رحلتك متأخرة'.",
-          telegram: "تم إرسال رسالة تيليجرام بنجاح.", // New mock result
         },
       },
     },
@@ -739,14 +685,6 @@ export const translations: {
           codeToReview: "Paste code to be reviewed here (e.g., JavaScript function, Python script)",
           docType: "Type of documentation (e.g., 'README.md', 'API Reference', 'User Guide')",
         },
-        mockResults: { // These are now illustrative, real data comes from Gemini
-          generatedUI: "Generated React component for a login form:\n```jsx\n// React Login Form Code\n```",
-          designedAPI: "Designed RESTful API for user management:\n```json\n// API Schema\n```",
-          createdDeployment: "Created a basic Dockerfile and Kubernetes deployment YAML.",
-          writtenTests: "Generated Jest test suite for user registration.",
-          generatedDoc: "Generated documentation for the specified code/feature.",
-          reviewedCode: "Code review: Overall good quality, but consider adding input validation. Rating: 7/10",
-        },
       },
       ar: {
         name: "عميل البرمجة",
@@ -773,14 +711,6 @@ export const translations: {
           codeDescription: "وصف الكود أو توقيع الدالة (مثال: 'دالة تسجيل المستخدم')",
           codeToReview: "الصق الكود للمراجعة هنا (مثال: دالة JavaScript، نص Python)",
           docType: "نوع التوثيق (e.g., 'README.md', 'API Reference', 'User Guide')",
-        },
-        mockResults: { // These are now illustrative, real data comes from Gemini
-          generatedUI: "تم إنشاء مكون React لنموذج تسجيل الدخول:\n```jsx\n// كود نموذج تسجيل الدخول React\n```",
-          designedAPI: "تم تصميم API RESTful لإدارة المستخدمين:\n```json\n// مخطط API\n```",
-          createdDeployment: "تم إنشاء Dockerfile أساسي و YAML نشر Kubernetes.",
-          writtenTests: "تم إنشاء مجموعة اختبار Jest لتسجيل المستخدمين.",
-          generatedDoc: "تم إنشاء التوثيق للكود/الميزة المحددة.",
-          reviewedCode: "مراجعة الكود: جودة جيدة بشكل عام، ولكن فكر في إضافة التحقق من المدخلات. التقييم: 7/10",
         },
       },
     },
@@ -810,32 +740,6 @@ export const translations: {
           metrics: "Key metrics (e.g., 'CTR', 'ROI', 'engagement')",
           searchQuery: "Search query for analytics (e.g., 'user engagement trends')",
         },
-        mockResults: { // Updated mockResults to reflect potential grounding chunks
-          marketResearch: {
-            text: "Market research complete: Identified key demographics and competitive landscape.",
-            groundingChunks: [{ web: { uri: "https://example.com/market-trends", title: "Market Trends 2024" } }]
-          },
-          seoSpecialist: {
-            text: "SEO strategy optimized: Recommended keywords and content improvements for ranking.",
-            groundingChunks: [{ web: { uri: "https://developers.google.com/search/docs/fundamentals/seo-starter-guide", title: "Google SEO Guide" } }]
-          },
-          contentStrategist: {
-            text: "Content strategy developed: Proposed blog posts, videos, and social media themes.",
-            groundingChunks: [{ web: { uri: "https://blog.hubspot.com/marketing/content-strategy", title: "HubSpot Content Strategy" } }]
-          },
-          socialMediaManager: {
-            text: "Social media plan drafted: Scheduled posts and engagement tactics for Instagram.",
-            groundingChunks: [{ web: { uri: "https://business.instagram.com/", title: "Instagram for Business" } }]
-          },
-          campaignManager: {
-            text: "Marketing campaign launched: Initial results show strong engagement.",
-            groundingChunks: [{ web: { uri: "https://ads.google.com/", title: "Google Ads" } }]
-          },
-          analyticsExpert: {
-            text: "Marketing data analyzed: Identified high-performing channels and areas for improvement.",
-            groundingChunks: [{ web: { uri: "https://analytics.google.com/analytics/web/", title: "Google Analytics" } }]
-          },
-        },
       },
       ar: {
         name: "عميل التسويق",
@@ -862,32 +766,6 @@ export const translations: {
           metrics: "المقاييس الرئيسية (مثال: 'نسبة النقر إلى الظهور', 'العائد على الاستثمار', 'التفاعل')",
           searchQuery: "استعلام البحث للتحليلات (مثال: 'اتجاهات تفاعل المستخدم')",
         },
-        mockResults: { // Updated mockResults to reflect potential grounding chunks
-          marketResearch: {
-            text: "اكتمل بحث السوق: تم تحديد التركيبة السكانية الرئيسية والمشهد التنافسي.",
-            groundingChunks: [{ web: { uri: "https://example.com/market-trends", title: "اتجاهات السوق 2024" } }]
-          },
-          seoSpecialist: {
-            text: "تم تحسين استراتيجية تحسين محركات البحث: تم التوصية بالكلمات المفتاحية وتحسينات المحتوى للترتيب.",
-            groundingChunks: [{ web: { uri: "https://developers.google.com/search/docs/fundamentals/seo-starter-guide", title: "دليل جوجل لتحسين محركات البحث" } }]
-          },
-          contentStrategist: {
-            text: "تم تطوير استراتيجية المحتوى: تم اقتراح منشورات المدونة ومقاطع الفيديو وموضوعات وسائل التواصل الاجتماعي.",
-            groundingChunks: [{ web: { uri: "https://blog.hubspot.com/marketing/content-strategy", title: "استراتيجية المحتوى من HubSpot" } }]
-          },
-          socialMediaManager: {
-            text: "تمت صياغة خطة وسائل التواصل الاجتماعي: تم جدولة المنشورات وتكتيكات التفاعل لـ Instagram.",
-            groundingChunks: [{ web: { uri: "https://business.instagram.com/", title: "إنستغرام للأعمال" } }]
-          },
-          campaignManager: {
-            text: "تم إطلاق الحملة التسويقية: تظهر النتائج الأولية تفاعلاً قوياً.",
-            groundingChunks: [{ web: { uri: "https://ads.google.com/", title: "إعلانات جوجل" } }]
-          },
-          analyticsExpert: {
-            text: "تم تحليل بيانات التسويق: تم تحديد القنوات عالية الأداء ومجالات التحسين.",
-            groundingChunks: [{ web: { uri: "https://analytics.google.com/analytics/web/", title: "تحليلات جوجل" } }]
-          },
-        },
       },
     },
      guardian: { // NEW GUARDIAN AGENT
@@ -898,7 +776,6 @@ export const translations: {
           debugTask: "Debug Task",
         },
         placeholders: {},
-        mockResults: {},
       },
       ar: {
         name: "العميل الحارس",
@@ -907,7 +784,6 @@ export const translations: {
           debugTask: "تصحيح المهمة",
         },
         placeholders: {},
-        mockResults: {},
       },
     },
   },

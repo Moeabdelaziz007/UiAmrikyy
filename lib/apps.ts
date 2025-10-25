@@ -4,7 +4,7 @@ import { AppDefinition } from '../types';
 import { translations } from './i18n';
 
 // Import Icons
-import { PlaneTakeoffIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon, UsersIcon, ScrollTextIcon } from '../components/IconComponents';
+import { PlaneTakeoffIcon, EyeIcon, SearchIcon, LanguagesIcon, CalendarIcon, HardDriveIcon, VideoIcon, MailIcon, CodeIcon, MegaphoneIcon, FolderOpenIcon, TerminalIcon, CogIcon, HistoryIcon, MessageSquareIcon, UsersIcon, ScrollTextIcon, BotIcon } from '../components/IconComponents';
 
 // Import App Components
 import TravelAgentUI from '../components/agents/NavigatorAgentUI';
@@ -25,6 +25,7 @@ import TaskHistoryApp from '../components/apps/TaskHistoryApp';
 import ChatbotApp from '../apps/ChatbotApp';
 import NexusApp from '../apps/NexusApp';
 import ContentCreatorApp from '../components/ContentCreatorApp';
+import DnaMakerAgentUI from '../components/agents/DnaMakerAgentUI';
 
 
 export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
@@ -45,10 +46,19 @@ export const appComponentMap: { [key: string]: React.ComponentType<any> } = {
   chatbot: ChatbotApp,
   nexus: NexusApp,
   contentCreator: ContentCreatorApp,
+  dnaMaker: DnaMakerAgentUI,
 };
 
 export const allApps: AppDefinition[] = [
   // Agents
+  { 
+    id: 'dnaMaker', 
+    name: { en: translations.agents.dnaMaker.en.name, ar: translations.agents.dnaMaker.ar.name }, 
+    description: { en: translations.agents.dnaMaker.en.description, ar: translations.agents.dnaMaker.ar.description }, 
+    icon: BotIcon, 
+    color: 'cyan',
+    component: DnaMakerAgentUI,
+  },
   { 
     id: 'nexus', 
     name: { en: translations.agents.nexus.en.name, ar: translations.agents.nexus.ar.name }, 
