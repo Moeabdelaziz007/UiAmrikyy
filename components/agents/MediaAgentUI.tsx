@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { VideoIcon, Film, Image, Wand2, Upload, Loader, Youtube } from 'lucide-react';
+import { VideoIcon, Film, Image, Wand2, Upload, Loader, Youtube, Search } from 'lucide-react';
 import { LanguageContext } from '../../App';
 import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
@@ -12,6 +12,13 @@ interface MediaAgentUIProps {
   onTaskComplete: (entry: TaskHistoryEntry) => void;
 }
 
+interface YouTubeVideo {
+    videoId: string;
+    title: string;
+    thumbnail: string;
+    channelTitle: string;
+}
+
 const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
   const { lang } = useContext(LanguageContext);
   const { theme } = useTheme();
@@ -21,6 +28,7 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
 
   // Image Generation State
   const [imagePrompt, setImagePrompt] = useState('');
+  const [imageAspectRatio, setImageAspectRatio] = useState('1:1');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
   // Video Generation State
@@ -39,11 +47,16 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
   const [originalEditImage, setOriginalEditImage] = useState<string | null>(null);
   const [editedImage, setEditedImage] = useState<string | null>(null);
   
-  // Video Analysis State
+  // Video Analysis State (Generic URL)
   const [videoUrl, setVideoUrl] = useState('');
   const [videoAnalysisPrompt, setVideoAnalysisPrompt] = useState('');
   const [videoAnalysisResult, setVideoAnalysisResult] = useState('');
 
+  // YouTube Tools State
+  const [youtubeQuery, setYoutubeQuery] = useState('');
+  const [youtubeResults, setYoutubeResults] = useState<YouTubeVideo[]>([]);
+  const [youtubeSummary, setYoutubeSummary] = useState('');
+  const [analyzingVideoId, setAnalyzingVideoId] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
@@ -175,7 +188,7 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
     if (!imagePrompt) return;
     setGeneratedImage(null);
     try {
-      const data = await executeTask(currentText.tasks.generateImage, { prompt: imagePrompt }, 'generateImage');
+      const data = await executeTask(currentText.tasks.generateImage, { prompt: imagePrompt, aspectRatio: imageAspectRatio }, 'generateImage');
       setGeneratedImage(`data:${data.mimeType};base64,${data.image}`);
     } catch (error) {
       console.error(error);
@@ -270,6 +283,31 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
     }
   };
 
+  const handleSearchYouTube = async () => {
+    if (!youtubeQuery) return;
+    setYoutubeResults([]);
+    setYoutubeSummary('');
+    try {
+      const data = await executeTask(currentText.tasks.searchVideos, { query: youtubeQuery }, 'searchVideos');
+      setYoutubeResults(data.videos || []);
+    } catch(error) {
+      console.error(error);
+    }
+  };
+
+  const handleSummarizeYouTube = async (title: string) => {
+    setYoutubeSummary('');
+    setAnalyzingVideoId(title); // Use title as a temporary ID for loading state
+    try {
+      const data = await executeTask('Summarize Video', { title }, 'summarizeVideo');
+      setYoutubeSummary(data.result);
+    } catch(error) {
+      setYoutubeSummary(`Error summarizing video: ${(error as Error).message}`);
+    } finally {
+      setAnalyzingVideoId(null);
+    }
+  };
+
 
   const inputClass = `w-full p-2 rounded-md border text-text bg-background focus:ring-2 focus:ring-primary focus:border-transparent`;
   const buttonClass = (taskLoading: boolean) => `w-full py-2 px-4 rounded-md text-white font-semibold bg-primary hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed`;
@@ -284,6 +322,41 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
         <VideoIcon className="w-6 h-6" /> {currentText.name}
       </h3>
       <p className={`text-text-secondary`}>{currentText.description}</p>
+
+      {/* YouTube Tools */}
+      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
+        <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}><Youtube className="w-5 h-5" /> YouTube Tools</h4>
+        <div className="flex gap-2 mb-3">
+            <input
+                type="text"
+                placeholder={currentText.placeholders.query}
+                value={youtubeQuery}
+                onChange={(e) => setYoutubeQuery(e.target.value)}
+                className={inputClass}
+            />
+            <button onClick={handleSearchYouTube} disabled={isLoading || !youtubeQuery} className="px-4 py-2 rounded-md text-white bg-primary hover:opacity-90 disabled:opacity-50">
+              {isLoading ? <Loader className="animate-spin" /> : <Search />}
+            </button>
+        </div>
+        {youtubeResults.length > 0 && (
+          <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-2">
+            {youtubeResults.map(video => (
+              <div key={video.videoId} className="flex items-start gap-2 p-2 bg-background rounded-md">
+                <img src={video.thumbnail} alt={video.title} className="w-20 h-14 object-cover rounded" />
+                <div className="flex-1 text-sm">
+                  <p className="font-semibold text-text truncate">{video.title}</p>
+                  <p className="text-xs text-text-secondary">{video.channelTitle}</p>
+                  <button onClick={() => handleSummarizeYouTube(video.title)} disabled={!!analyzingVideoId} className="mt-1 text-xs text-primary disabled:opacity-50">
+                    {analyzingVideoId === video.title ? 'Summarizing...' : 'Summarize with AI'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {youtubeSummary && <p className="mt-4 p-2 bg-background rounded-md whitespace-pre-wrap text-sm">{youtubeSummary}</p>}
+      </div>
+
 
       {/* Analyze Video (Gemini Pro) */}
       <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
@@ -327,7 +400,6 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
               value={imagePrompt}
               onChange={(e) => setImagePrompt(e.target.value)}
               className={`${inputClass} mb-3`}
-              style={{ borderColor: currentThemeColors.border }}
               rows={2}
             />
             <button
@@ -339,6 +411,13 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
                 {isRefining && refiningField === 'imagePrompt' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
             </button>
         </div>
+        <select value={imageAspectRatio} onChange={e => setImageAspectRatio(e.target.value)} className={`${inputClass} mb-3`}>
+            <option value="1:1">1:1 (Square)</option>
+            <option value="16:9">16:9 (Landscape)</option>
+            <option value="9:16">9:16 (Portrait)</option>
+            <option value="4:3">4:3 (Standard)</option>
+            <option value="3:4">3:4 (Tall)</option>
+        </select>
         <button onClick={handleGenerateImage} disabled={isLoading || !imagePrompt} className={buttonClass(isLoading)}>
           {isLoading ? <Loader className="mx-auto animate-spin" /> : currentText.tasks.generateImage}
         </button>

@@ -6,7 +6,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { translations } from '../../lib/i18n';
 import { TaskHistoryEntry } from '../../types';
 import { decode, decodeAudioData, encode } from '../../utils/audio';
-import { GoogleGenAI, LiveSession, LiveServerMessage, Modality, Blob as GenAIAPIBlob } from '@google/genai';
+// FIX: Module '"@google/genai"' has no exported member 'LiveSession'.
+import { GoogleGenAI, LiveServerMessage, Modality, Blob as GenAIAPIBlob } from '@google/genai';
 
 interface TranslatorAgentUIProps {
   onTaskComplete: (entry: TaskHistoryEntry) => void;
@@ -29,7 +30,8 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
   // States for live transcription
   const [transcription, setTranscription] = useState('');
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const sessionRef = useRef<LiveSession | null>(null);
+  // FIX: Module '"@google/genai"' has no exported member 'LiveSession'. Changed type to any.
+  const sessionRef = useRef<any | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
@@ -90,13 +92,17 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
                     scriptProcessor.connect(context.destination);
                 },
                 onmessage: (message: LiveServerMessage) => {
+                    // FIX: Property 'isFinal' does not exist on type 'Transcription'.
+                    // Replaced with logic that uses 'turnComplete' to determine when an utterance is final.
                     if (message.serverContent?.inputTranscription) {
-                        const transcriptPart = message.serverContent.inputTranscription;
-                        if (transcriptPart.isFinal) {
-                            finalTranscriptionRef.current += transcriptPart.text + ' ';
+                        const text = message.serverContent.inputTranscription.text;
+                        finalTranscriptionRef.current += text;
+                        setTranscription(finalTranscriptionRef.current);
+                    }
+                    if (message.serverContent?.turnComplete) {
+                        if (!finalTranscriptionRef.current.endsWith(' ')) {
+                            finalTranscriptionRef.current += ' ';
                             setTranscription(finalTranscriptionRef.current);
-                        } else {
-                            setTranscription(finalTranscriptionRef.current + transcriptPart.text);
                         }
                     }
                 },
@@ -171,49 +177,51 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
         mimeType: 'audio/pcm;rate=16000',
     };
   }
+  
+  const executeTask = async (taskName: string, taskKey: keyof typeof currentText.tasks, taskInput: Record<string, any>) => {
+    setIsLoading(true);
+    setResult('');
+    setCurrentTask(taskKey);
+    try {
+        const response = await fetch('http://localhost:3000/api/agents/translator', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: taskKey, ...taskInput })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || `Failed to execute ${taskName}`);
+        }
+        const data = await response.json();
+        const formattedResult = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+        setResult(formattedResult);
+        onTaskComplete({
+          id: Date.now().toString(), agentId: 'translator', agentName: currentText.name,
+          taskType: taskName, taskInput, taskOutput: data,
+          timestamp: new Date().toISOString(), status: 'success',
+        });
+    } catch (error: any) {
+        setResult(`Error: ${error.message}`);
+        onTaskComplete({
+          id: Date.now().toString(), agentId: 'translator', agentName: currentText.name,
+          taskType: taskName, taskInput, taskOutput: `Error: ${error.message}`,
+          timestamp: new Date().toISOString(), status: 'error', errorMessage: error.message,
+        });
+    } finally {
+        setIsLoading(false);
+        setCurrentTask(null);
+    }
+  };
+
 
   const handleTranslateText = () => {
     if (!textToTranslate || !targetLang) return;
-    mockExecuteTask(
-      currentText.tasks.translateText,
-      { text: textToTranslate, targetLang, sourceLang },
-      currentText.mockResults.translate
-    );
+    executeTask(currentText.tasks.translateText, 'translateText', { text: textToTranslate, targetLang, sourceLang });
   };
 
   const handleDetectLanguage = () => {
     if (!textToTranslate) return;
-    mockExecuteTask(
-      currentText.tasks.detectLanguage,
-      { text: textToTranslate },
-      currentText.mockResults.detect
-    );
-  };
-  
-  const mockExecuteTask = async (
-    taskType: string,
-    taskInput: string | Record<string, any>,
-    mockOutput: string | Record<string, any>,
-    isError: boolean = false,
-    errorMessage: string = ''
-  ) => {
-    setIsLoading(true);
-    setResult('');
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    setResult(isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)));
-
-    onTaskComplete({
-      id: Date.now().toString(),
-      agentId: 'translator',
-      agentName: currentText.name,
-      taskType: taskType,
-      taskInput: taskInput,
-      taskOutput: isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)),
-      timestamp: new Date().toISOString(),
-      status: isError ? 'error' : 'success',
-      errorMessage: isError ? errorMessage : undefined,
-    });
+    executeTask(currentText.tasks.detectLanguage, 'detectLanguage', { text: textToTranslate });
   };
 
   const handleTextToVoice = async () => {
@@ -395,7 +403,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
           style={{ background: currentThemeColors.surface, borderColor: currentThemeColors.border, color: currentThemeColors.text }}
         >
           <h4 className="font-semibold mb-2">{globalText.output}:</h4>
-          <p>{result}</p>
+          <pre className="whitespace-pre-wrap text-sm">{result}</pre>
         </motion.div>
       )}
     </motion.div>

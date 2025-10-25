@@ -27,68 +27,79 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
   const [itineraryData, setItineraryData] = useState(''); // Mock for JSON input
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTask, setCurrentTask] = useState('');
 
-  // FIX: Update mockOutput parameter type to allow Record<string, any>
-  const mockExecuteTask = async (
-    taskType: string,
-    taskInput: string | Record<string, any>,
-    mockOutput: string | Record<string, any>,
-    isError: boolean = false,
-    errorMessage: string = ''
+  const executeTask = async (
+    taskKey: keyof typeof currentText.tasks,
+    taskInput: Record<string, any>
   ) => {
     setIsLoading(true);
+    setCurrentTask(taskKey);
     setResult('');
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
-    setIsLoading(false);
-    setResult(isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)));
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/scheduler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: taskKey, ...taskInput }),
+      });
 
-    onTaskComplete({
-      id: Date.now().toString(),
-      agentId: 'scheduler',
-      agentName: currentText.name,
-      taskType: taskType,
-      taskInput: taskInput,
-      taskOutput: isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)),
-      timestamp: new Date().toISOString(),
-      status: isError ? 'error' : 'success',
-      errorMessage: isError ? errorMessage : undefined,
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+      
+      const data = await response.json();
+      const formattedResult = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+      setResult(formattedResult);
+
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'scheduler',
+        agentName: currentText.name,
+        taskType: currentText.tasks[taskKey],
+        taskInput: taskInput,
+        taskOutput: data,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+      });
+    } catch (err: any) {
+      setResult(`Error: ${err.message}`);
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'scheduler',
+        agentName: currentText.name,
+        taskType: currentText.tasks[taskKey],
+        taskInput: taskInput,
+        taskOutput: { error: err.message },
+        timestamp: new Date().toISOString(),
+        status: 'error',
+        errorMessage: err.message,
+      });
+    } finally {
+      setIsLoading(false);
+      setCurrentTask('');
+    }
   };
+
 
   const handleCreateEvent = () => {
     if (!eventTitle || !startTime || !endTime) return;
-    mockExecuteTask(
-      currentText.tasks.createEvent,
-      { title: eventTitle, location: eventLocation, startTime, endTime },
-      currentText.mockResults.create
-    );
+    executeTask('createEvent', { title: eventTitle, location: eventLocation, startTime, endTime });
   };
 
   const handleCheckAvailability = () => {
     if (!timeRange) return;
-    mockExecuteTask(
-      currentText.tasks.checkAvailability,
-      { timeRange },
-      currentText.mockResults.check
-    );
+    executeTask('checkAvailability', { timeRange });
   };
 
   const handleSetReminder = () => {
     if (!eventId || !reminder) return;
-    mockExecuteTask(
-      currentText.tasks.setReminder,
-      { eventId, reminder },
-      currentText.mockResults.reminder
-    );
+    executeTask('setReminder', { eventId, reminder });
   };
 
   const handleSyncItinerary = () => {
     if (!itineraryData) return;
-    mockExecuteTask(
-      currentText.tasks.syncItinerary,
-      { itineraryData },
-      currentText.mockResults.sync
-    );
+    executeTask('syncItinerary', { itineraryData });
   };
 
   const inputClass = `w-full p-2 rounded-md border text-text bg-background focus:ring-2 focus:ring-primary focus:border-transparent`;
@@ -142,7 +153,7 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
           style={{ borderColor: currentThemeColors.border }}
         />
         <button onClick={handleCreateEvent} disabled={isLoading || !eventTitle || !startTime || !endTime} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.createEvent}
+          {isLoading && currentTask === 'createEvent' ? globalText.loading : currentText.tasks.createEvent}
         </button>
       </div>
 
@@ -158,7 +169,7 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
           style={{ borderColor: currentThemeColors.border }}
         />
         <button onClick={handleCheckAvailability} disabled={isLoading || !timeRange} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.checkAvailability}
+          {isLoading && currentTask === 'checkAvailability' ? globalText.loading : currentText.tasks.checkAvailability}
         </button>
       </div>
 
@@ -182,7 +193,7 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
           style={{ borderColor: currentThemeColors.border }}
         />
         <button onClick={handleSetReminder} disabled={isLoading || !eventId || !reminder} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.setReminder}
+          {isLoading && currentTask === 'setReminder' ? globalText.loading : currentText.tasks.setReminder}
         </button>
       </div>
 
@@ -198,7 +209,7 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
           rows={3}
         />
         <button onClick={handleSyncItinerary} disabled={isLoading || !itineraryData} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.syncItinerary}
+          {isLoading && currentTask === 'syncItinerary' ? globalText.loading : currentText.tasks.syncItinerary}
         </button>
       </div>
 
@@ -210,7 +221,7 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
           style={{ background: currentThemeColors.surface, borderColor: currentThemeColors.border, color: currentThemeColors.text }}
         >
           <h4 className="font-semibold mb-2">{globalText.output}:</h4>
-          <p>{result}</p>
+          <pre className="whitespace-pre-wrap text-sm">{result}</pre>
         </motion.div>
       )}
     </motion.div>

@@ -25,68 +25,79 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
   const [email, setEmail] = useState('');
   const [result, setResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentTask, setCurrentTask] = useState('');
 
-  // FIX: Update mockOutput parameter type to allow Record<string, any>
-  const mockExecuteTask = async (
-    taskType: string,
-    taskInput: string | Record<string, any>,
-    mockOutput: string | Record<string, any>,
-    isError: boolean = false,
-    errorMessage: string = ''
+  const executeTask = async (
+    taskKey: keyof typeof currentText.tasks,
+    taskInput: Record<string, any>
   ) => {
     setIsLoading(true);
+    setCurrentTask(taskKey);
     setResult('');
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
-    setIsLoading(false);
-    setResult(isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)));
+    try {
+      const response = await fetch(`http://localhost:3000/api/agents/storage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: taskKey, ...taskInput }),
+      });
 
-    onTaskComplete({
-      id: Date.now().toString(),
-      agentId: 'storage',
-      agentName: currentText.name,
-      taskType: taskType,
-      taskInput: taskInput,
-      taskOutput: isError ? errorMessage : (typeof mockOutput === 'string' ? mockOutput : JSON.stringify(mockOutput)),
-      timestamp: new Date().toISOString(),
-      status: isError ? 'error' : 'success',
-      errorMessage: isError ? errorMessage : undefined,
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
+      }
+      
+      const data = await response.json();
+      const formattedResult = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+      setResult(formattedResult);
+
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'storage',
+        agentName: currentText.name,
+        taskType: currentText.tasks[taskKey],
+        taskInput: taskInput,
+        taskOutput: data,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+      });
+    } catch (err: any) {
+      setResult(`Error: ${err.message}`);
+      onTaskComplete({
+        id: Date.now().toString(),
+        agentId: 'storage',
+        agentName: currentText.name,
+        taskType: currentText.tasks[taskKey],
+        taskInput: taskInput,
+        taskOutput: { error: err.message },
+        timestamp: new Date().toISOString(),
+        status: 'error',
+        errorMessage: err.message,
+      });
+    } finally {
+      setIsLoading(false);
+      setCurrentTask('');
+    }
   };
+
 
   const handleSaveDocument = () => {
     if (!documentContent || !filename) return;
-    mockExecuteTask(
-      currentText.tasks.saveDocument,
-      { content: documentContent, filename },
-      currentText.mockResults.save
-    );
+    executeTask('saveDocument', { content: documentContent, filename });
   };
 
   const handleCreateItinerary = () => {
     if (!tripData) return;
-    mockExecuteTask(
-      currentText.tasks.createItinerary,
-      { tripData },
-      currentText.mockResults.create
-    );
+    executeTask('createItinerary', { tripData });
   };
 
   const handleUploadFile = () => {
     if (!fileInput || !filename) return;
-    mockExecuteTask(
-      currentText.tasks.uploadFile,
-      { file: fileInput, filename },
-      currentText.mockResults.upload
-    );
+    executeTask('uploadFile', { fileInput, filename });
   };
 
   const handleShareFile = () => {
     if (!fileId || !email) return;
-    mockExecuteTask(
-      currentText.tasks.shareFile,
-      { fileId, email },
-      currentText.mockResults.share
-    );
+    executeTask('shareFile', { fileId, email });
   };
 
   const inputClass = `w-full p-2 rounded-md border text-text bg-background focus:ring-2 focus:ring-primary focus:border-transparent`;
@@ -124,7 +135,7 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
           style={{ borderColor: currentThemeColors.border }}
         />
         <button onClick={handleSaveDocument} disabled={isLoading || !documentContent || !filename} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.saveDocument}
+          {isLoading && currentTask === 'saveDocument' ? globalText.loading : currentText.tasks.saveDocument}
         </button>
       </div>
 
@@ -140,7 +151,7 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
           rows={3}
         />
         <button onClick={handleCreateItinerary} disabled={isLoading || !tripData} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.createItinerary}
+          {isLoading && currentTask === 'createItinerary' ? globalText.loading : currentText.tasks.createItinerary}
         </button>
       </div>
 
@@ -164,7 +175,7 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
           style={{ borderColor: currentThemeColors.border }}
         />
         <button onClick={handleUploadFile} disabled={isLoading || !fileInput || !filename} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.uploadFile}
+          {isLoading && currentTask === 'uploadFile' ? globalText.loading : currentText.tasks.uploadFile}
         </button>
       </div>
 
@@ -188,7 +199,7 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
           style={{ borderColor: currentThemeColors.border }}
         />
         <button onClick={handleShareFile} disabled={isLoading || !fileId || !email} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.shareFile}
+          {isLoading && currentTask === 'shareFile' ? globalText.loading : currentText.tasks.shareFile}
         </button>
       </div>
 
@@ -200,7 +211,7 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
           style={{ background: currentThemeColors.surface, borderColor: currentThemeColors.border, color: currentThemeColors.text }}
         >
           <h4 className="font-semibold mb-2">{globalText.output}:</h4>
-          <p>{result}</p>
+          <pre className="whitespace-pre-wrap text-sm">{result}</pre>
         </motion.div>
       )}
     </motion.div>
