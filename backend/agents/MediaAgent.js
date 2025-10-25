@@ -24,7 +24,7 @@ class MediaAgent {
 
         case 'generateImage':
           if (!task.prompt) throw new Error('Prompt is required for generateImage.');
-          return await this.generateImage(task.prompt);
+          return await this.generateImage(task.prompt, task.aspectRatio);
 
         case 'generateVideo':
           if (!task.prompt) throw new Error('Prompt is required for generateVideo.');
@@ -59,16 +59,16 @@ class MediaAgent {
     }
   }
 
-  async generateImage(prompt) {
+  async generateImage(prompt, aspectRatio = '1:1') {
     const ai = getAi();
-    logger.info(`[${this.name}] Generating image with prompt: "${prompt}"`);
+    logger.info(`[${this.name}] Generating image with prompt: "${prompt}" and aspect ratio: ${aspectRatio}`);
     const response = await ai.models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: prompt,
         config: {
           numberOfImages: 1,
           outputMimeType: 'image/jpeg',
-          aspectRatio: '1:1',
+          aspectRatio: aspectRatio,
         },
     });
 
