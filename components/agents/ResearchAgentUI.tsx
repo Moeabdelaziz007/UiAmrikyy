@@ -42,7 +42,7 @@ const ResearchAgentUI: React.FC<ResearchAgentUIProps> = ({ onTaskComplete }) => 
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/research`, {
+      const response = await fetch(`/api/agents/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: taskType, ...taskInput }),

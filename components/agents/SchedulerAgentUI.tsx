@@ -37,7 +37,7 @@ const SchedulerAgentUI: React.FC<SchedulerAgentUIProps> = ({ onTaskComplete }) =
     setCurrentTask(taskKey);
     setResult('');
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/scheduler`, {
+      const response = await fetch(`/api/agents/scheduler`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: taskKey, ...taskInput }),

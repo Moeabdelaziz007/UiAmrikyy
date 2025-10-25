@@ -59,7 +59,7 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
     setIsRefining(true);
     setRefiningField(field);
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/prompt-engineer`, {
+      const response = await fetch(`/api/agents/prompt-engineer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, context }),
@@ -104,7 +104,7 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
     setIsLoading(true);
     setResult('');
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/coding`, {
+      const response = await fetch(`/api/agents/coding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -345,95 +345,4 @@ const CodingAgentUI: React.FC<CodingAgentUIProps> = ({ onTaskComplete }) => {
               rows={3}
             />
             <button
-                onClick={() => handleRefinePrompt(qaFeatureToTest, 'Write test cases for a feature', setQaFeatureToTest, 'qaFeatureToTest')}
-                disabled={isRefining || !qaFeatureToTest}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
-                title="Refine with AI"
-            >
-                {isRefining && refiningField === 'qaFeatureToTest' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
-            </button>
-        </div>
-        <input
-          type="text"
-          placeholder={currentText.placeholders.testFramework}
-          value={qaTestFramework}
-          onChange={(e) => setQaTestFramework(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-        />
-        <button onClick={handleWriteTests} disabled={isLoading || !qaFeatureToTest} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.writeTests}
-        </button>
-      </div>
-
-      {/* Generate Documentation */}
-      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
-          <FileText className="w-5 h-5" /> {currentText.tasks.generateDocumentation}
-        </h4>
-        <div className="relative">
-            <textarea
-              placeholder={currentText.placeholders.codeDescription}
-              value={docCodeDescription}
-              onChange={(e) => setDocCodeDescription(e.target.value)}
-              className={`${inputClass} mb-3`}
-              style={{ borderColor: currentThemeColors.border }}
-              rows={3}
-            />
-            <button
-                onClick={() => handleRefinePrompt(docCodeDescription, 'Generate documentation from a code description', setDocCodeDescription, 'docCodeDescription')}
-                disabled={isRefining || !docCodeDescription}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-surface hover:bg-background transition-colors disabled:opacity-50"
-                title="Refine with AI"
-            >
-                {isRefining && refiningField === 'docCodeDescription' ? <Loader size={16} className="animate-spin" /> : <Wand2 size={16} />}
-            </button>
-        </div>
-        <input
-          type="text"
-          placeholder={currentText.placeholders.docType}
-          value={docType}
-          onChange={(e) => setDocType(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-        />
-        <button onClick={handleGenerateDocumentation} disabled={isLoading || (!docCodeDescription && !docType)} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.generateDocumentation}
-        </button>
-      </div>
-
-      {/* Code Reviewer (NEW) */}
-      <div className={`p-4 rounded-lg shadow`} style={{ background: currentThemeColors.surface }}>
-        <h4 className={`text-xl font-semibold mb-3 text-text flex items-center gap-2`}>
-          <MonitorCheck className="w-5 h-5" /> {currentText.tasks.reviewCode}
-        </h4>
-        <textarea
-          placeholder={currentText.placeholders.codeToReview}
-          value={codeToReview}
-          onChange={(e) => setCodeToReview(e.target.value)}
-          className={`${inputClass} mb-3`}
-          style={{ borderColor: currentThemeColors.border }}
-          rows={8}
-        />
-        <button onClick={handleReviewCode} disabled={isLoading || !codeToReview} className={buttonClass}>
-          {isLoading ? globalText.loading : currentText.tasks.reviewCode}
-        </button>
-      </div>
-
-
-      {result && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-lg mt-4 shadow overflow-x-auto`}
-          style={{ background: currentThemeColors.surface, borderColor: currentThemeColors.border, color: currentThemeColors.text }}
-        >
-          <h4 className="font-semibold mb-2">{globalText.output}:</h4>
-          <pre className="whitespace-pre-wrap font-mono text-sm">{result}</pre>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-};
-
-export default CodingAgentUI;
+                onClick={() => handleRefinePrompt(qaFeatureToTest, 'Write test cases for a feature', setQaFeatureToTest, 'qaFeatureTo

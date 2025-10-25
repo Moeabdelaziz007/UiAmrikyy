@@ -55,7 +55,7 @@ const ContentCreatorApp: React.FC<{ onTaskComplete: (entry: TaskHistoryEntry) =>
                 })
             );
 
-            const response = await fetch('http://localhost:3000/api/agents/content-creator', {
+            const response = await fetch('/api/agents/content-creator', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

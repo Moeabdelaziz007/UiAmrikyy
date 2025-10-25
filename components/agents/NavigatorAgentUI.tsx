@@ -50,7 +50,7 @@ const TravelAgentUI: React.FC<TravelAgentUIProps> = ({ onTaskComplete }) => {
     setError('');
 
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/travel`, {
+      const response = await fetch(`/api/agents/travel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: taskKey, ...taskInput }),

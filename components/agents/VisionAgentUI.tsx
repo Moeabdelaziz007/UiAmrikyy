@@ -60,7 +60,7 @@ const VisionAgentUI: React.FC<VisionAgentUIProps> = ({ onTaskComplete }) => {
         taskInput.prompt = prompt;
       }
 
-      const response = await fetch(`http://localhost:3000/api/agents/vision`, {
+      const response = await fetch(`/api/agents/vision`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: taskType, ...taskInput }),

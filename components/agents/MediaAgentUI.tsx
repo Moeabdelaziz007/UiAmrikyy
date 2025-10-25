@@ -72,7 +72,7 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
     setIsRefining(true);
     setRefiningField(field);
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/prompt-engineer`, {
+      const response = await fetch(`/api/agents/prompt-engineer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, context }),
@@ -142,7 +142,7 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/media`, {
+      const response = await fetch(`/api/agents/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: taskKey, ...taskInput }),
@@ -219,7 +219,7 @@ const MediaAgentUI: React.FC<MediaAgentUIProps> = ({ onTaskComplete }) => {
   const pollVideoStatus = (operation: any) => {
       pollingIntervalRef.current = window.setInterval(async () => {
           try {
-              const response = await fetch(`http://localhost:3000/api/agents/media/video-status`, {
+              const response = await fetch(`/api/agents/media/video-status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ operation }),

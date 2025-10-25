@@ -18,6 +18,7 @@ const PromptEngineeringAgent = require('../agents/PromptEngineeringAgent'); // I
 const VoiceControlAgent = require('../agents/VoiceControlAgent'); // Import VoiceControlAgent
 const GuardianAgent = require('../agents/GuardianAgent'); // Import GuardianAgent
 const ContentCreatorAgent = require('../agents/ContentCreatorAgent'); // Import ContentCreatorAgent
+const DnaMakerAgent = require('../agents/DnaMakerAgent');
 const logger = require('../utils/logger');
 
 
@@ -37,6 +38,7 @@ const promptEngineeringAgent = new PromptEngineeringAgent();
 const voiceControlAgent = new VoiceControlAgent();
 const guardianAgent = new GuardianAgent(); // Instantiate GuardianAgent
 const contentCreatorAgent = new ContentCreatorAgent(); // Instantiate ContentCreatorAgent
+const dnaMakerAgent = new DnaMakerAgent();
 
 
 // --- Orchestrator Route ---
@@ -80,6 +82,17 @@ router.post('/agents/chat', async (req, res) => {
     res.json(result);
   } catch (error) {
     logger.error('Chat Agent error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DNA Maker Agent
+router.post('/agents/dna-maker', async (req, res) => {
+  try {
+    const result = await dnaMakerAgent.executeTask(req.body);
+    res.json(result);
+  } catch (error) {
+    logger.error('DNA Maker Agent error:', error);
     res.status(500).json({ error: error.message });
   }
 });

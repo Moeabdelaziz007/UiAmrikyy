@@ -35,7 +35,7 @@ const StorageAgentUI: React.FC<StorageAgentUIProps> = ({ onTaskComplete }) => {
     setCurrentTask(taskKey);
     setResult('');
     try {
-      const response = await fetch(`http://localhost:3000/api/agents/storage`, {
+      const response = await fetch(`/api/agents/storage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: taskKey, ...taskInput }),

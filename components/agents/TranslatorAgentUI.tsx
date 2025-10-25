@@ -183,7 +183,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
     setResult('');
     setCurrentTask(taskKey);
     try {
-        const response = await fetch('http://localhost:3000/api/agents/translator', {
+        const response = await fetch('/api/agents/translator', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ type: taskKey, ...taskInput })
@@ -230,7 +230,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
     setCurrentTask('textToVoice');
     setResult('');
     try {
-        const response = await fetch('http://localhost:3000/api/agents/translator', {
+        const response = await fetch('/api/agents/translator', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -252,7 +252,8 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
             source.buffer = audioBuffer;
             source.connect(audioCtx.destination);
             source.start();
-            setResult(currentText.mockResults.textToVoice as string);
+            // FIX: Use a localized string from global translations instead of a non-existent property.
+            setResult(globalText.audioPlayed);
         } else {
             throw new Error('No audio content received.');
         }
@@ -263,7 +264,8 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
           agentName: currentText.name,
           taskType: currentText.tasks.textToVoice,
           taskInput: { text: textToTranslate, language: targetLang },
-          taskOutput: 'Audio generated and played.',
+          // FIX: Use a localized string from global translations for consistency.
+          taskOutput: globalText.audioPlayed,
           timestamp: new Date().toISOString(),
           status: 'success',
         });
@@ -311,9 +313,7 @@ const TranslatorAgentUI: React.FC<TranslatorAgentUIProps> = ({ onTaskComplete })
           style={{backgroundColor: isTranscribing ? theme.colors.error : theme.colors.primary}}
           disabled={isLoading && currentTask !== 'voiceToText'}
         >
-          {isTranscribing ? <Loader className="animate-spin"/> : (
-            isTranscribing ? <><Square size={16}/> {lang === 'en' ? 'Stop Transcribing' : 'إيقاف النسخ'}</> : <><Mic size={16}/> {lang === 'en' ? 'Start Transcribing' : 'بدء النسخ'}</>
-          )}
+          {isTranscribing ? <><Loader className="animate-spin" size={16} /> {lang === 'en' ? 'Listening...' : 'يستمع...'}</> : <><Mic size={16}/> {lang === 'en' ? 'Start Transcribing' : 'بدء النسخ'}</>}
         </button>
         {(transcription || result) && (
             <div className="mt-4 p-3 bg-background rounded-md border" style={{ borderColor: currentThemeColors.border }}>
